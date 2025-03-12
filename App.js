@@ -1,120 +1,108 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { UserProvider } from './src/context/UserContext';
-import { NavigationContainer } from '@react-navigation/native';
-import { LogBox } from 'react-native';
-import { theme } from './src/styles/theme';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, StatusBar, Platform } from 'react-native';
 
-// Ignore specific warnings if necessary
-LogBox.ignoreLogs([
-  'Warning: Failed prop type',
-  'Warning: "shadow',
-  'Warning: The following props are not supported'
-]);
-
-// We're starting with a simple app structure to debug the rendering
 export default function App() {
-  const [showFallback, setShowFallback] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (showFallback) {
-    return <AppFallback onContinue={() => setShowFallback(false)} />;
-  }
+  useEffect(() => {
+    // Simulate loading time
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <SafeAreaProvider>
-      <UserProvider>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <View style={styles.mainContainer}>
-            <Text style={styles.welcomeText}>Welcome to Finnish Food Scanner!</Text>
-            <Text style={styles.descriptionText}>
-              Scan food products to check their contents, allergens, and get recipe recommendations.
-            </Text>
-            <TouchableOpacity style={styles.button} onPress={() => console.log('Scan button pressed')}>
-              <Text style={styles.buttonText}>Scan Product</Text>
-            </TouchableOpacity>
-          </View>
-        </NavigationContainer>
-      </UserProvider>
-    </SafeAreaProvider>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.container}>
+        {isLoading ? (
+          <Text>Loading app...</Text>
+        ) : (
+          <>
+            <View style={styles.header}>
+              <Text style={styles.title}>Foodscan Finland</Text>
+              <Text style={styles.subtitle}>Scan Finnish grocery products for allergen information and recipe ideas</Text>
+            </View>
+            
+            <View style={styles.mainContent}>
+              <Text style={styles.paragraph}>
+                Welcome to Foodscan Finland! This app helps you make informed food choices by:
+              </Text>
+              
+              <View style={styles.featureList}>
+                <Text style={styles.featureItem}>• Scanning product barcodes</Text>
+                <Text style={styles.featureItem}>• Identifying allergens</Text>
+                <Text style={styles.featureItem}>• Warning about problematic E-codes</Text>
+                <Text style={styles.featureItem}>• Suggesting recipes based on your preferences</Text>
+              </View>
+              
+              <Text style={styles.actionText}>
+                Soon you'll be able to scan products and get personalized information!
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
-// Simple fallback component for troubleshooting
-const AppFallback = ({ onContinue }) => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Finnish Food Scanner</Text>
-      <Text style={styles.subtitle}>Scan Finnish grocery products</Text>
-      <TouchableOpacity style={styles.startButton} onPress={onContinue}>
-        <Text style={styles.startButtonText}>Start App</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#ffffff',
     padding: 20,
   },
+  header: {
+    marginBottom: 40,
+    alignItems: 'center',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: theme.colors.primary,
+    color: '#0074D9',
     marginBottom: 12,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: theme.colors.textSecondary,
+    color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 24,
+    marginHorizontal: 20,
   },
-  startButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  startButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  mainContainer: {
+  mainContent: {
     flex: 1,
-    paddingTop: 80,
-    paddingHorizontal: 20,
-    backgroundColor: theme.colors.background,
-    alignItems: 'center',
+    paddingHorizontal: 10,
   },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 16,
+  paragraph: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#333333',
+    marginBottom: 20,
+  },
+  featureList: {
+    marginVertical: 20,
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+    borderRadius: 10,
+  },
+  featureItem: {
+    fontSize: 16,
+    lineHeight: 28,
+    color: '#333333',
+  },
+  actionText: {
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: '#0074D9',
+    marginTop: 30,
     textAlign: 'center',
   },
-  descriptionText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  button: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 30,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  }
 });

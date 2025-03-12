@@ -4,10 +4,10 @@
     "slug": "foodscan-finland",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/food-icon.svg",
+    "icon": "./generated-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/food-icon.svg",
+      "image": "./generated-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -25,13 +25,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/food-icon.svg",
+        "foregroundImage": "./generated-icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "permissions": ["CAMERA"]
     },
     "web": {
-      "favicon": "./assets/food-icon.svg"
+      "favicon": "./generated-icon.png",
+      "bundler": "metro"
     }
   }
 }
