@@ -7,21 +7,32 @@ export default function App() {
   const isWeb = Platform.OS === 'web';
   
   // Apply different styles based on platform
-  const containerStyle = isWeb 
-    ? { ...styles.container, maxWidth: 800, margin: '0 auto', height: '100vh' } 
-    : styles.container;
+  const webStyles = isWeb ? {
+    containerWeb: {
+      maxWidth: 800,
+      margin: '0 auto',
+      height: '100vh',
+    },
+    headerWeb: {
+      paddingTop: 20,
+    },
+    sectionWeb: {
+      boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    }
+  } : {};
   
-  const headerStyle = isWeb
-    ? { ...styles.header, paddingTop: 20 }
-    : styles.header;
+  // On web platform, we add a console.log to debug
+  if (isWeb) {
+    console.log('Running on web platform');
+  }
     
   return (
-    <View style={containerStyle}>
-      <View style={headerStyle}>
+    <View style={[styles.container, isWeb && webStyles.containerWeb]}>
+      <View style={[styles.header, isWeb && webStyles.headerWeb]}>
         <Text style={styles.headerText}>Finnish Food Scanner</Text>
       </View>
       <ScrollView style={styles.content}>
-        <View style={styles.section}>
+        <View style={[styles.section, isWeb && webStyles.sectionWeb]}>
           <Text style={styles.sectionTitle}>Welcome to Food Scanner</Text>
           <Text style={styles.paragraph}>
             This application helps you scan Finnish grocery products to get detailed 
@@ -29,7 +40,7 @@ export default function App() {
           </Text>
         </View>
         
-        <View style={styles.section}>
+        <View style={[styles.section, isWeb && webStyles.sectionWeb]}>
           <Text style={styles.sectionTitle}>Key Features</Text>
           
           <View style={styles.featureItem}>
@@ -92,8 +103,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
-    // Use boxShadow for web compatibility instead of shadowX properties
-    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
   },
   sectionTitle: {

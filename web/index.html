@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finnish Food Scanner</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    html, body {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+    
+    .container {
+      max-width: 800px;
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background-color: #3F51B5;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 22px;
+      font-weight: bold;
+    }
+    
+    .content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .section {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #3F51B5;
+    }
+    
+    .paragraph {
+      font-size: 16px;
+      line-height: 24px;
+      color: #333;
+    }
+    
+    .feature-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .feature-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #212121;
+    }
+    
+    .feature-description {
+      font-size: 14px;
+      color: #757575;
+      line-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Finnish Food Scanner</h1>
+    </div>
+    <div class="content">
+      <div class="section">
+        <h2 class="section-title">Welcome to Food Scanner</h2>
+        <p class="paragraph">
+          This application helps you scan Finnish grocery products to get detailed 
+          information about ingredients, allergens, and recipe suggestions.
+        </p>
+      </div>
+      
+      <div class="section">
+        <h2 class="section-title">Key Features</h2>
+        
+        <div class="feature-item">
+          <h3 class="feature-title">🔍 Barcode Scanning</h3>
+          <p class="feature-description">
+            Scan product barcodes to get detailed nutritional information
+          </p>
+        </div>
+        
+        <div class="feature-item">
+          <h3 class="feature-title">⚠️ Allergen Warnings</h3>
+          <p class="feature-description">
+            Set up alerts for ingredients you want to avoid
+          </p>
+        </div>
+        
+        <div class="feature-item">
+          <h3 class="feature-title">🍳 Recipe Suggestions</h3>
+          <p class="feature-description">
+            Get recipe ideas based on scanned products
+          </p>
+        </div>
+        
+        <div class="feature-item">
+          <h3 class="feature-title">🧊 Inventory Integration</h3>
+          <p class="feature-description">
+            Connect with your virtual refrigerator and freezer inventory
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
