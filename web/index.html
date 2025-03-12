@@ -224,6 +224,156 @@
       border-left: 4px solid #4CAF50;
     }
     
+    /* Allergen and E-code styling */
+    .allergen-tag {
+      display: inline-block;
+      background-color: #FFEBEE;
+      color: #C62828;
+      border: 1px solid #EF9A9A;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin: 2px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .e-code-tag {
+      display: inline-block;
+      background-color: #E8EAF6;
+      color: #3949AB;
+      border: 1px solid #9FA8DA;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin: 2px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .allergen-details, .e-code-details {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+    }
+    
+    .allergen-details {
+      background-color: #FFEBEE;
+      border: 1px solid #EF9A9A;
+    }
+    
+    .e-code-details {
+      background-color: #E8EAF6;
+      border: 1px solid #9FA8DA;
+    }
+    
+    .symptom-severity {
+      margin-top: 10px;
+    }
+    
+    .symptom-severity h5 {
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .symptom-list {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    
+    .symptom-list li {
+      padding: 5px 0;
+      font-size: 14px;
+    }
+    
+    .severity-mild {
+      color: #2E7D32;
+    }
+    
+    .severity-moderate {
+      color: #EF6C00;
+    }
+    
+    .severity-severe {
+      color: #B71C1C;
+    }
+    
+    .common-in {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    .common-in span {
+      display: inline-block;
+      background-color: #F5F5F5;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin: 2px;
+      font-size: 12px;
+    }
+    
+    .risk-level {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+    
+    .risk-high {
+      background-color: #FFEBEE;
+      color: #C62828;
+    }
+    
+    .risk-moderate {
+      background-color: #FFF8E1;
+      color: #FF8F00;
+    }
+    
+    .risk-low {
+      background-color: #E8F5E9;
+      color: #2E7D32;
+    }
+    
+    .detail-section {
+      margin-bottom: 15px;
+    }
+    
+    .detail-section h4 {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    
+    .tab-container {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 15px;
+    }
+    
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+    }
+    
+    .tab.active {
+      background-color: white;
+      border-bottom: 1px solid white;
+      margin-bottom: -1px;
+      font-weight: bold;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
     @media (max-width: 600px) {
       .scanner-options {
         flex-direction: column;
@@ -362,7 +512,7 @@
         <!-- Result Container -->
         <div class="result-container" id="result">
           <h3>Product Analysis Results</h3>
-          <p>Results will appear here after analysis</p>
+          <div id="product-details"></div>
         </div>
       </div>
       
@@ -379,7 +529,14 @@
         <div class="feature-item">
           <h3 class="feature-title">⚠️ Allergen Warnings</h3>
           <p class="feature-description">
-            Set up alerts for ingredients you want to avoid
+            Set up alerts for ingredients you want to avoid with detailed symptom information
+          </p>
+        </div>
+        
+        <div class="feature-item">
+          <h3 class="feature-title">🧪 E-Number Information</h3>
+          <p class="feature-description">
+            Identify food additives and understand their potential health implications
           </p>
         </div>
         
@@ -407,6 +564,19 @@
     </div>
   </div>
 
+  <!-- Import allergen and E-code databases -->
+  <script type="module">
+    import { allergenDatabase } from './js/allergenDatabase.js';
+    import { eCodeDatabase, getECodeInfo, extractECodesFromText, categorizeECodesByRisk } from './js/eCodeDatabase.js';
+    
+    // Make them available globally
+    window.allergenDatabase = allergenDatabase;
+    window.eCodeDatabase = eCodeDatabase;
+    window.getECodeInfo = getECodeInfo;
+    window.extractECodesFromText = extractECodesFromText;
+    window.categorizeECodesByRisk = categorizeECodesByRisk;
+  </script>
+
   <script>
     // DOM elements
     const optionButtons = document.querySelectorAll('.scanner-option');
@@ -431,6 +601,7 @@
     const submitManualBtn = document.getElementById('submit-manual');
     const loading = document.getElementById('loading');
     const resultContainer = document.getElementById('result');
+    const productDetailsContainer = document.getElementById('product-details');
     
     let stream = null;
     
@@ -523,7 +694,7 @@
     });
     
     analyzeCameraBtn.addEventListener('click', () => {
-      simulateProductAnalysis('camera');
+      analyzeProduct('camera');
     });
     
     // Drag and drop / file upload functionality
@@ -571,7 +742,7 @@
     }
     
     analyzeUploadBtn.addEventListener('click', () => {
-      simulateProductAnalysis('upload');
+      analyzeProduct('upload');
     });
     
     // Barcode functionality
@@ -613,7 +784,7 @@
         alert('Please enter a barcode number');
         return;
       }
-      simulateProductAnalysis('barcode');
+      analyzeProduct('barcode');
     });
     
     // Manual entry functionality
@@ -627,11 +798,11 @@
         return;
       }
       
-      simulateProductAnalysis('manual');
+      analyzeProduct('manual');
     });
     
-    // Simulate product analysis
-    function simulateProductAnalysis(method) {
+    // Analyze product and display results
+    function analyzeProduct(method) {
       // Hide all input containers
       resetActiveSections();
       
@@ -645,14 +816,14 @@
         resultContainer.style.display = 'block';
         
         // Different sample results based on method
-        let sampleProduct;
+        let product;
+        
         if (method === 'barcode') {
-          sampleProduct = {
+          product = {
             name: 'Valio Laktoositon Rasvaton Maito',
             brand: 'Valio',
             origin: 'Finland',
-            ingredients: 'Milk, Vitamin D',
-            allergens: ['Milk'],
+            ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
             nutritionalValues: {
               calories: '33 kcal/100ml',
               protein: '3.3g/100ml',
@@ -665,12 +836,11 @@
           const brand = document.getElementById('product-brand').value;
           const ingredients = document.getElementById('product-ingredients').value;
           
-          sampleProduct = {
+          product = {
             name: name,
             brand: brand,
             origin: 'Not specified',
             ingredients: ingredients,
-            allergens: extractAllergens(ingredients),
             nutritionalValues: {
               calories: 'Not specified',
               protein: 'Not specified',
@@ -680,12 +850,11 @@
           };
         } else {
           // Camera or upload
-          sampleProduct = {
+          product = {
             name: 'Fazer Puikula Rye Bread',
             brand: 'Fazer',
             origin: 'Finland',
-            ingredients: 'Wholegrain rye flour, water, rye malt, salt, yeast',
-            allergens: ['Wheat', 'Rye'],
+            ingredients: 'Wholegrain rye flour, water, wheat flour, rye malt, salt, yeast, E300, E472e',
             nutritionalValues: {
               calories: '215 kcal/100g',
               protein: '6.9g/100g',
@@ -695,47 +864,339 @@
           };
         }
         
-        // Display the results
-        resultContainer.innerHTML = `
-          <h3>${sampleProduct.name}</h3>
-          <p><strong>Brand:</strong> ${sampleProduct.brand}</p>
-          <p><strong>Origin:</strong> ${sampleProduct.origin}</p>
-          <p><strong>Ingredients:</strong> ${sampleProduct.ingredients}</p>
-          <p><strong>Allergens:</strong> ${sampleProduct.allergens.join(', ') || 'None detected'}</p>
-          <h4>Nutritional Values</h4>
-          <p>Calories: ${sampleProduct.nutritionalValues.calories}</p>
-          <p>Protein: ${sampleProduct.nutritionalValues.protein}</p>
-          <p>Carbohydrates: ${sampleProduct.nutritionalValues.carbohydrates}</p>
-          <p>Fat: ${sampleProduct.nutritionalValues.fat}</p>
-          <div style="margin-top: 15px">
+        // Analyze for allergens
+        const allergens = extractAllergensWithDetails(product.ingredients);
+        
+        // Find E-codes
+        let eCodes = [];
+        try {
+          eCodes = window.extractECodesFromText ? window.extractECodesFromText(product.ingredients) : [];
+        } catch (e) {
+          console.error('Error extracting E-codes:', e);
+        }
+        
+        // Render product details with tabs
+        renderProductDetails(product, allergens, eCodes);
+      }, 1500);
+    }
+    
+    function renderProductDetails(product, allergens, eCodes) {
+      // Create tabs for different sections
+      const tabsHTML = `
+        <div class="tab-container">
+          <div class="tab active" data-tab="overview">Overview</div>
+          <div class="tab" data-tab="allergens">Allergens</div>
+          <div class="tab" data-tab="additives">E-Numbers</div>
+        </div>
+      `;
+      
+      // Overview tab content
+      const overviewHTML = `
+        <div class="tab-content active" id="overview-content">
+          <h3>${product.name}</h3>
+          <p><strong>Brand:</strong> ${product.brand}</p>
+          <p><strong>Origin:</strong> ${product.origin}</p>
+          <p><strong>Ingredients:</strong> ${product.ingredients}</p>
+          
+          <div class="detail-section">
+            <h4>Identified Allergens:</h4>
+            <div id="allergen-tags">
+              ${allergens.length > 0 ? 
+                allergens.map(a => `<span class="allergen-tag" data-allergen="${a.name}">${a.name}</span>`).join(' ') 
+                : '<span>None detected</span>'}
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h4>Identified E-Numbers:</h4>
+            <div id="ecode-tags">
+              ${eCodes.length > 0 ? 
+                eCodes.map(e => `<span class="e-code-tag" data-ecode="${e.code}">${e.code} (${e.name})</span>`).join(' ') 
+                : '<span>None detected</span>'}
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h4>Nutritional Values:</h4>
+            <p>Calories: ${product.nutritionalValues.calories}</p>
+            <p>Protein: ${product.nutritionalValues.protein}</p>
+            <p>Carbohydrates: ${product.nutritionalValues.carbohydrates}</p>
+            <p>Fat: ${product.nutritionalValues.fat}</p>
+          </div>
+          
+          <div style="margin-top: 20px">
             <button class="btn" onclick="alert('Feature coming soon!')"><i class="fas fa-utensils"></i> Get Recipe Suggestions</button>
             <button class="btn" onclick="alert('Feature coming soon!')"><i class="fas fa-plus"></i> Add to Inventory</button>
           </div>
-        `;
-      }, 2000);
+        </div>
+      `;
+      
+      // Allergens tab content
+      const allergensHTML = `
+        <div class="tab-content" id="allergens-content">
+          <h3>Allergen Information</h3>
+          ${allergens.length > 0 ? 
+            allergens.map(a => renderAllergenDetails(a)).join('') 
+            : '<p>No allergens detected in this product.</p>'}
+        </div>
+      `;
+      
+      // E-Numbers tab content
+      const eCodesHTML = `
+        <div class="tab-content" id="additives-content">
+          <h3>E-Number Information</h3>
+          ${eCodes.length > 0 ? 
+            eCodes.map(e => renderECodeDetails(e)).join('') 
+            : '<p>No E-numbers detected in this product.</p>'}
+        </div>
+      `;
+      
+      // Combine all content
+      productDetailsContainer.innerHTML = tabsHTML + overviewHTML + allergensHTML + eCodesHTML;
+      
+      // Add tab functionality
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Remove active class from all tabs and content
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          
+          // Add active class to clicked tab and corresponding content
+          tab.classList.add('active');
+          document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+        });
+      });
+      
+      // Add click events to allergen tags
+      document.querySelectorAll('.allergen-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+          // Switch to allergens tab
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          document.querySelector('.tab[data-tab="allergens"]').classList.add('active');
+          document.getElementById('allergens-content').classList.add('active');
+          
+          // Scroll to the specific allergen
+          const allergenElement = document.getElementById(`allergen-${tag.dataset.allergen}`);
+          if (allergenElement) {
+            allergenElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+      
+      // Add click events to E-code tags
+      document.querySelectorAll('.e-code-tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+          // Switch to e-codes tab
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          document.querySelector('.tab[data-tab="additives"]').classList.add('active');
+          document.getElementById('additives-content').classList.add('active');
+          
+          // Scroll to the specific E-code
+          const ecodeElement = document.getElementById(`ecode-${tag.dataset.ecode.replace(/[^a-zA-Z0-9]/g, '')}`);
+          if (ecodeElement) {
+            ecodeElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
     }
     
-    // Simple function to extract common allergens from ingredients text
-    function extractAllergens(ingredientsText) {
-      const commonAllergens = [
-        'milk', 'dairy', 'lactose', 
-        'wheat', 'gluten', 'rye', 'barley', 'oats',
-        'egg', 'eggs',
-        'nuts', 'peanuts', 'almonds', 'walnuts', 'cashews',
-        'soy', 'soybeans',
-        'fish', 'shellfish', 'crustaceans',
-        'sesame'
-      ];
+    function renderAllergenDetails(allergen) {
+      let symptomsSections = '';
       
-      const lowerIngredients = ingredientsText.toLowerCase();
+      // Create symptoms sections based on severity
+      if (allergen.symptoms.mild) {
+        symptomsSections += `
+          <div class="symptom-severity">
+            <h5 class="severity-mild">Mild Symptoms:</h5>
+            <ul class="symptom-list">
+              ${allergen.symptoms.mild.map(symptom => `<li>${symptom}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      if (allergen.symptoms.moderate) {
+        symptomsSections += `
+          <div class="symptom-severity">
+            <h5 class="severity-moderate">Moderate Symptoms:</h5>
+            <ul class="symptom-list">
+              ${allergen.symptoms.moderate.map(symptom => `<li>${symptom}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      if (allergen.symptoms.severe) {
+        symptomsSections += `
+          <div class="symptom-severity">
+            <h5 class="severity-severe">Severe Symptoms:</h5>
+            <ul class="symptom-list">
+              ${allergen.symptoms.severe.map(symptom => `<li>${symptom}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      // Handle special case for lactose (which has different symptom structure)
+      if (allergen.symptoms.common) {
+        symptomsSections = `
+          <div class="symptom-severity">
+            <h5>Common Symptoms:</h5>
+            <ul class="symptom-list">
+              ${allergen.symptoms.common.map(symptom => `<li>${symptom}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      // Handle special case for gluten (which has different symptom structure)
+      if (allergen.symptoms.celiacDisease) {
+        symptomsSections = `
+          <div class="symptom-severity">
+            <h5 class="severity-severe">Celiac Disease Symptoms:</h5>
+            <ul class="symptom-list">
+              ${allergen.symptoms.celiacDisease.map(symptom => `<li>${symptom}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="symptom-severity">
+            <h5 class="severity-moderate">Non-Celiac Gluten Sensitivity Symptoms:</h5>
+            <ul class="symptom-list">
+              ${allergen.symptoms.nonCeliacSensitivity.map(symptom => `<li>${symptom}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="symptom-severity">
+            <h5 class="severity-severe">Wheat Allergy Symptoms:</h5>
+            <ul class="symptom-list">
+              ${allergen.symptoms.wheatAllergy.map(symptom => `<li>${symptom}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+      
+      // Common foods containing this allergen
+      const commonIn = allergen.commonIn && allergen.commonIn.length ? 
+        `<div class="common-in">
+          <strong>Commonly found in:</strong><br>
+          ${allergen.commonIn.map(item => `<span>${item}</span>`).join(' ')}
+        </div>` : '';
+      
+      // Cross reactivity
+      const crossReactivity = allergen.crossReactivity && allergen.crossReactivity.length ? 
+        `<p><strong>Cross-reactivity with:</strong> ${allergen.crossReactivity.join(', ')}</p>` : '';
+      
+      // Additional notes
+      const notes = allergen.notes ? `<p><em>${allergen.notes}</em></p>` : '';
+      
+      // Onset time
+      const onsetTime = allergen.onsetTime ? `<p><strong>Typical onset:</strong> ${allergen.onsetTime}</p>` : '';
+      
+      return `
+        <div class="allergen-details" id="allergen-${allergen.name}" style="display: block; margin-bottom: 20px;">
+          <h4>${allergen.name}</h4>
+          <p>${allergen.description}</p>
+          ${onsetTime}
+          ${symptomsSections}
+          ${commonIn}
+          ${crossReactivity}
+          ${notes}
+        </div>
+      `;
+    }
+    
+    function renderECodeDetails(eCode) {
+      // Determine risk level class and text
+      let riskClass = 'risk-low';
+      let riskText = 'Low Risk';
+      
+      if (eCode.potentialIssues.some(issue => 
+        issue.toLowerCase().includes('allerg') || 
+        issue.toLowerCase().includes('sensitivity') ||
+        issue.toLowerCase().includes('reaction') ||
+        issue.toLowerCase().includes('asthma') ||
+        issue.toLowerCase().includes('carcinogen') || 
+        issue.toLowerCase().includes('toxic')
+      )) {
+        riskClass = 'risk-high';
+        riskText = 'High Risk';
+      } else if (eCode.potentialIssues.some(issue => !issue.includes('safe'))) {
+        riskClass = 'risk-moderate';
+        riskText = 'Moderate Risk';
+      }
+      
+      return `
+        <div class="e-code-details" id="ecode-${eCode.code.replace(/[^a-zA-Z0-9]/g, '')}" style="display: block; margin-bottom: 20px;">
+          <h4>${eCode.code}: ${eCode.name} <span class="risk-level ${riskClass}">${riskText}</span></h4>
+          <p><strong>Category:</strong> ${eCode.category}</p>
+          <p><strong>Origin:</strong> ${eCode.origin}</p>
+          <p><strong>Function:</strong> ${eCode.function}</p>
+          
+          <div class="detail-section">
+            <h5>Potential Issues:</h5>
+            <ul>
+              ${eCode.potentialIssues.map(issue => `<li>${issue}</li>`).join('')}
+            </ul>
+          </div>
+          
+          <div class="common-in">
+            <strong>Commonly found in:</strong><br>
+            ${eCode.commonIn.map(item => `<span>${item}</span>`).join(' ')}
+          </div>
+        </div>
+      `;
+    }
+    
+    // Extract allergens from ingredients and get their details
+    function extractAllergensWithDetails(ingredientsText) {
+      if (!ingredientsText) return [];
+      
+      // Helper function to check if an allergen is present
+      function containsAllergen(ingredients, allergenName) {
+        return ingredients.toLowerCase().includes(allergenName.toLowerCase());
+      }
+      
       const foundAllergens = [];
+      const processedAllergens = new Set(); // To avoid duplicates
       
-      commonAllergens.forEach(allergen => {
-        if (lowerIngredients.includes(allergen)) {
-          // Capitalize first letter
-          foundAllergens.push(allergen.charAt(0).toUpperCase() + allergen.slice(1));
+      // This will work once the module is loaded
+      if (window.allergenDatabase) {
+        for (const [key, allergen] of Object.entries(window.allergenDatabase)) {
+          if (containsAllergen(ingredientsText, key) && !processedAllergens.has(allergen.name)) {
+            processedAllergens.add(allergen.name);
+            foundAllergens.push(allergen);
+          }
         }
-      });
+      } else {
+        // Fallback if the module isn't loaded yet
+        const commonAllergens = [
+          'milk', 'dairy', 'lactose', 
+          'wheat', 'gluten', 'rye', 'barley', 'oats',
+          'egg', 'eggs',
+          'nuts', 'peanuts', 'almonds', 'walnuts', 'cashews',
+          'soy', 'soybeans',
+          'fish', 'shellfish', 'crustaceans',
+          'sesame'
+        ];
+        
+        const lowerIngredients = ingredientsText.toLowerCase();
+        
+        commonAllergens.forEach(allergen => {
+          if (lowerIngredients.includes(allergen) && !processedAllergens.has(allergen)) {
+            processedAllergens.add(allergen);
+            // Create a minimal allergen object
+            foundAllergens.push({
+              name: allergen.charAt(0).toUpperCase() + allergen.slice(1),
+              description: `Potential allergen: ${allergen}`,
+              symptoms: {
+                mild: ['Skin reactions', 'Digestive issues'],
+                moderate: ['Respiratory symptoms'],
+                severe: ['Anaphylaxis (in severe cases)']
+              }
+            });
+          }
+        });
+      }
       
       return foundAllergens;
     }
