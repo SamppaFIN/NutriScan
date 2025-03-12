@@ -1,11 +1,23 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Platform } from 'react-native';
 
 export default function App() {
+  // Check if we're running on web
+  const isWeb = Platform.OS === 'web';
+  
+  // Apply different styles based on platform
+  const containerStyle = isWeb 
+    ? { ...styles.container, maxWidth: 800, margin: '0 auto', height: '100vh' } 
+    : styles.container;
+  
+  const headerStyle = isWeb
+    ? { ...styles.header, paddingTop: 20 }
+    : styles.header;
+    
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={containerStyle}>
+      <View style={headerStyle}>
         <Text style={styles.headerText}>Finnish Food Scanner</Text>
       </View>
       <ScrollView style={styles.content}>
@@ -80,10 +92,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    // Use boxShadow for web compatibility instead of shadowX properties
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
   },
   sectionTitle: {
