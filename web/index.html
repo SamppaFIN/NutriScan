@@ -62,6 +62,7 @@
       font-size: 16px;
       line-height: 24px;
       color: #333;
+      margin-bottom: 15px;
     }
     
     .feature-item {
@@ -82,7 +83,159 @@
       color: #757575;
       line-height: 20px;
     }
+    
+    /* Scanner section styles */
+    .scanner-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .scanner-option {
+      flex: 1;
+      min-width: 150px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .scanner-option:hover {
+      background-color: #e0e0e0;
+      transform: translateY(-2px);
+    }
+    
+    .scanner-option i {
+      font-size: 32px;
+      color: #3F51B5;
+      margin-bottom: 10px;
+      display: block;
+    }
+    
+    .scanner-option-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    
+    .scanner-option-desc {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .input-container {
+      margin-top: 15px;
+      display: none;
+    }
+    
+    .active {
+      display: block;
+    }
+    
+    .camera-container, .dropzone {
+      border: 2px dashed #3F51B5;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 15px;
+      text-align: center;
+      background-color: #f9f9f9;
+    }
+    
+    .dropzone {
+      position: relative;
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    
+    #file-input {
+      display: none;
+    }
+    
+    #video-preview, #image-preview {
+      max-width: 100%;
+      max-height: 300px;
+      margin-top: 15px;
+      border-radius: 8px;
+      display: none;
+    }
+    
+    .btn {
+      background-color: #3F51B5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: background-color 0.3s ease;
+    }
+    
+    .btn:hover {
+      background-color: #303F9F;
+    }
+    
+    .btn-secondary {
+      background-color: #757575;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #616161;
+    }
+    
+    .input-group {
+      margin-bottom: 15px;
+    }
+    
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .input-group input, .input-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    
+    .loading-indicator {
+      display: none;
+      margin: 20px auto;
+      text-align: center;
+      color: #3F51B5;
+    }
+    
+    .result-container {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #e8f5e9;
+      border-left: 4px solid #4CAF50;
+    }
+    
+    @media (max-width: 600px) {
+      .scanner-options {
+        flex-direction: column;
+      }
+      
+      .scanner-option {
+        width: 100%;
+      }
+    }
   </style>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
   <div class="container">
@@ -96,15 +249,130 @@
           This application helps you scan Finnish grocery products to get detailed 
           information about ingredients, allergens, and recipe suggestions.
         </p>
+        
+        <p class="paragraph">
+          Choose one of the methods below to identify a product:
+        </p>
+        
+        <div class="scanner-options">
+          <div class="scanner-option" id="camera-option">
+            <i class="fas fa-camera"></i>
+            <div class="scanner-option-title">Camera</div>
+            <div class="scanner-option-desc">Use your device camera to analyze a product</div>
+          </div>
+          
+          <div class="scanner-option" id="upload-option">
+            <i class="fas fa-upload"></i>
+            <div class="scanner-option-title">Upload Image</div>
+            <div class="scanner-option-desc">Upload a product photo from your device</div>
+          </div>
+          
+          <div class="scanner-option" id="barcode-option">
+            <i class="fas fa-barcode"></i>
+            <div class="scanner-option-title">Barcode</div>
+            <div class="scanner-option-desc">Scan or enter a product barcode</div>
+          </div>
+          
+          <div class="scanner-option" id="manual-option">
+            <i class="fas fa-keyboard"></i>
+            <div class="scanner-option-title">Manual Entry</div>
+            <div class="scanner-option-desc">Enter product details manually</div>
+          </div>
+        </div>
+        
+        <!-- Camera Input Container -->
+        <div class="input-container" id="camera-container">
+          <h3>Use Camera</h3>
+          <p>Allow camera access to analyze your product</p>
+          
+          <div class="camera-container">
+            <video id="video-preview" autoplay playsinline></video>
+            <img id="captured-image" style="display: none; max-width: 100%; max-height: 300px;">
+            <p id="camera-placeholder">Click the button below to start your camera</p>
+            <button class="btn" id="start-camera"><i class="fas fa-camera"></i> Start Camera</button>
+            <button class="btn" id="capture-image" style="display: none;"><i class="fas fa-camera"></i> Capture</button>
+            <button class="btn btn-secondary" id="retake-image" style="display: none;"><i class="fas fa-redo"></i> Retake</button>
+            <button class="btn" id="analyze-camera-image" style="display: none;"><i class="fas fa-search"></i> Analyze Product</button>
+          </div>
+        </div>
+        
+        <!-- Upload Input Container -->
+        <div class="input-container" id="upload-container">
+          <h3>Upload Product Image</h3>
+          <p>Drag and drop a product image or click to browse</p>
+          
+          <div class="dropzone" id="dropzone">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 32px; color: #3F51B5; margin-bottom: 10px;"></i>
+            <p>Drag & Drop your product image here<br>or click to browse</p>
+            <input type="file" id="file-input" accept="image/*">
+            <img id="image-preview" src="" alt="Preview">
+            <button class="btn" id="analyze-upload" style="display: none;"><i class="fas fa-search"></i> Analyze Product</button>
+          </div>
+        </div>
+        
+        <!-- Barcode Input Container -->
+        <div class="input-container" id="barcode-container">
+          <h3>Scan or Enter Barcode</h3>
+          <p>You can enter a barcode number directly or scan it with your camera</p>
+          
+          <div class="input-group">
+            <label for="barcode-input">Barcode Number</label>
+            <input type="text" id="barcode-input" placeholder="Enter product barcode (e.g., 6410405103420)">
+          </div>
+          
+          <button class="btn" id="scan-barcode"><i class="fas fa-barcode"></i> Scan Barcode</button>
+          <button class="btn" id="lookup-barcode"><i class="fas fa-search"></i> Look Up Product</button>
+          
+          <div class="camera-container" id="barcode-scanner" style="display: none;">
+            <video id="barcode-video" autoplay playsinline></video>
+            <p>Point camera at a barcode</p>
+            <button class="btn btn-secondary" id="close-scanner"><i class="fas fa-times"></i> Close Scanner</button>
+          </div>
+        </div>
+        
+        <!-- Manual Input Container -->
+        <div class="input-container" id="manual-container">
+          <h3>Enter Product Details</h3>
+          <p>Provide information about your product manually</p>
+          
+          <div class="input-group">
+            <label for="product-name">Product Name</label>
+            <input type="text" id="product-name" placeholder="e.g., Valio Skyr Strawberry Yogurt">
+          </div>
+          
+          <div class="input-group">
+            <label for="product-brand">Brand</label>
+            <input type="text" id="product-brand" placeholder="e.g., Valio">
+          </div>
+          
+          <div class="input-group">
+            <label for="product-ingredients">Ingredients</label>
+            <textarea id="product-ingredients" rows="4" placeholder="List of ingredients separated by commas"></textarea>
+          </div>
+          
+          <button class="btn" id="submit-manual"><i class="fas fa-paper-plane"></i> Submit Information</button>
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div class="loading-indicator" id="loading">
+          <i class="fas fa-spinner fa-spin" style="font-size: 32px;"></i>
+          <p>Analyzing product...</p>
+        </div>
+        
+        <!-- Result Container -->
+        <div class="result-container" id="result">
+          <h3>Product Analysis Results</h3>
+          <p>Results will appear here after analysis</p>
+        </div>
       </div>
       
       <div class="section">
         <h2 class="section-title">Key Features</h2>
         
         <div class="feature-item">
-          <h3 class="feature-title">🔍 Barcode Scanning</h3>
+          <h3 class="feature-title">🔍 Multiple Recognition Methods</h3>
           <p class="feature-description">
-            Scan product barcodes to get detailed nutritional information
+            Use camera, upload images, scan barcodes, or enter product details manually
           </p>
         </div>
         
@@ -128,8 +396,349 @@
             Connect with your virtual refrigerator and freezer inventory
           </p>
         </div>
+        
+        <div class="feature-item">
+          <h3 class="feature-title">🤖 AI-Powered Recognition</h3>
+          <p class="feature-description">
+            Automatic detection of brand, origin, and product details from images
+          </p>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    // DOM elements
+    const optionButtons = document.querySelectorAll('.scanner-option');
+    const inputContainers = document.querySelectorAll('.input-container');
+    const startCameraBtn = document.getElementById('start-camera');
+    const captureBtn = document.getElementById('capture-image');
+    const retakeBtn = document.getElementById('retake-image');
+    const analyzeCameraBtn = document.getElementById('analyze-camera-image');
+    const videoPreview = document.getElementById('video-preview');
+    const capturedImage = document.getElementById('captured-image');
+    const cameraPlaceholder = document.getElementById('camera-placeholder');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const imagePreview = document.getElementById('image-preview');
+    const analyzeUploadBtn = document.getElementById('analyze-upload');
+    const barcodeInput = document.getElementById('barcode-input');
+    const scanBarcodeBtn = document.getElementById('scan-barcode');
+    const lookupBarcodeBtn = document.getElementById('lookup-barcode');
+    const barcodeScanner = document.getElementById('barcode-scanner');
+    const barcodeVideo = document.getElementById('barcode-video');
+    const closeScannerBtn = document.getElementById('close-scanner');
+    const submitManualBtn = document.getElementById('submit-manual');
+    const loading = document.getElementById('loading');
+    const resultContainer = document.getElementById('result');
+    
+    let stream = null;
+    
+    // Helper functions
+    function resetActiveSections() {
+      inputContainers.forEach(container => {
+        container.classList.remove('active');
+      });
+    }
+    
+    // Event Listeners for option buttons
+    optionButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const optionId = button.id;
+        resetActiveSections();
+        
+        // Show the corresponding container
+        switch(optionId) {
+          case 'camera-option':
+            document.getElementById('camera-container').classList.add('active');
+            break;
+          case 'upload-option':
+            document.getElementById('upload-container').classList.add('active');
+            break;
+          case 'barcode-option':
+            document.getElementById('barcode-container').classList.add('active');
+            break;
+          case 'manual-option':
+            document.getElementById('manual-container').classList.add('active');
+            break;
+        }
+      });
+    });
+    
+    // Camera functionality
+    startCameraBtn.addEventListener('click', async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        videoPreview.srcObject = stream;
+        videoPreview.style.display = 'block';
+        cameraPlaceholder.style.display = 'none';
+        startCameraBtn.style.display = 'none';
+        captureBtn.style.display = 'inline-block';
+      } catch (err) {
+        console.error('Error accessing camera:', err);
+        alert('Could not access camera. Please ensure you have granted camera permissions.');
+      }
+    });
+    
+    captureBtn.addEventListener('click', () => {
+      // Create canvas to capture frame from video
+      const canvas = document.createElement('canvas');
+      canvas.width = videoPreview.videoWidth;
+      canvas.height = videoPreview.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
+      
+      // Display captured image and hide video
+      capturedImage.src = canvas.toDataURL('image/png');
+      capturedImage.style.display = 'block';
+      videoPreview.style.display = 'none';
+      captureBtn.style.display = 'none';
+      retakeBtn.style.display = 'inline-block';
+      analyzeCameraBtn.style.display = 'inline-block';
+      
+      // Stop camera stream
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    });
+    
+    retakeBtn.addEventListener('click', async () => {
+      capturedImage.style.display = 'none';
+      retakeBtn.style.display = 'none';
+      analyzeCameraBtn.style.display = 'none';
+      
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        videoPreview.srcObject = stream;
+        videoPreview.style.display = 'block';
+        captureBtn.style.display = 'inline-block';
+      } catch (err) {
+        console.error('Error accessing camera:', err);
+        startCameraBtn.style.display = 'inline-block';
+      }
+    });
+    
+    analyzeCameraBtn.addEventListener('click', () => {
+      simulateProductAnalysis('camera');
+    });
+    
+    // Drag and drop / file upload functionality
+    dropzone.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#3F51B5';
+      dropzone.style.backgroundColor = '#E8EAF6';
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.borderColor = '#3F51B5';
+      dropzone.style.backgroundColor = '#f9f9f9';
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#3F51B5';
+      dropzone.style.backgroundColor = '#f9f9f9';
+      
+      const file = e.dataTransfer.files[0];
+      handleImageFile(file);
+    });
+    
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      handleImageFile(file);
+    });
+    
+    function handleImageFile(file) {
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block';
+          analyzeUploadBtn.style.display = 'inline-block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Please select a valid image file');
+      }
+    }
+    
+    analyzeUploadBtn.addEventListener('click', () => {
+      simulateProductAnalysis('upload');
+    });
+    
+    // Barcode functionality
+    scanBarcodeBtn.addEventListener('click', async () => {
+      barcodeScanner.style.display = 'block';
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        barcodeVideo.srcObject = stream;
+        
+        // In a real app, we would use a barcode detection library here
+        // For this demo, we'll just simulate finding a barcode after a few seconds
+        setTimeout(() => {
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
+          barcodeScanner.style.display = 'none';
+          barcodeInput.value = '6410405103420'; // Simulated barcode (Valio milk)
+          alert('Barcode detected: 6410405103420');
+        }, 3000);
+        
+      } catch (err) {
+        console.error('Error accessing camera:', err);
+        alert('Could not access camera. Please ensure you have granted camera permissions.');
+        barcodeScanner.style.display = 'none';
+      }
+    });
+    
+    closeScannerBtn.addEventListener('click', () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      barcodeScanner.style.display = 'none';
+    });
+    
+    lookupBarcodeBtn.addEventListener('click', () => {
+      if (barcodeInput.value.trim() === '') {
+        alert('Please enter a barcode number');
+        return;
+      }
+      simulateProductAnalysis('barcode');
+    });
+    
+    // Manual entry functionality
+    submitManualBtn.addEventListener('click', () => {
+      const name = document.getElementById('product-name').value.trim();
+      const brand = document.getElementById('product-brand').value.trim();
+      const ingredients = document.getElementById('product-ingredients').value.trim();
+      
+      if (name === '' || brand === '' || ingredients === '') {
+        alert('Please fill out all fields');
+        return;
+      }
+      
+      simulateProductAnalysis('manual');
+    });
+    
+    // Simulate product analysis
+    function simulateProductAnalysis(method) {
+      // Hide all input containers
+      resetActiveSections();
+      
+      // Show loading
+      loading.style.display = 'block';
+      resultContainer.style.display = 'none';
+      
+      // Simulate processing time
+      setTimeout(() => {
+        loading.style.display = 'none';
+        resultContainer.style.display = 'block';
+        
+        // Different sample results based on method
+        let sampleProduct;
+        if (method === 'barcode') {
+          sampleProduct = {
+            name: 'Valio Laktoositon Rasvaton Maito',
+            brand: 'Valio',
+            origin: 'Finland',
+            ingredients: 'Milk, Vitamin D',
+            allergens: ['Milk'],
+            nutritionalValues: {
+              calories: '33 kcal/100ml',
+              protein: '3.3g/100ml',
+              carbohydrates: '4.9g/100ml',
+              fat: '0g/100ml'
+            }
+          };
+        } else if (method === 'manual') {
+          const name = document.getElementById('product-name').value;
+          const brand = document.getElementById('product-brand').value;
+          const ingredients = document.getElementById('product-ingredients').value;
+          
+          sampleProduct = {
+            name: name,
+            brand: brand,
+            origin: 'Not specified',
+            ingredients: ingredients,
+            allergens: extractAllergens(ingredients),
+            nutritionalValues: {
+              calories: 'Not specified',
+              protein: 'Not specified',
+              carbohydrates: 'Not specified',
+              fat: 'Not specified'
+            }
+          };
+        } else {
+          // Camera or upload
+          sampleProduct = {
+            name: 'Fazer Puikula Rye Bread',
+            brand: 'Fazer',
+            origin: 'Finland',
+            ingredients: 'Wholegrain rye flour, water, rye malt, salt, yeast',
+            allergens: ['Wheat', 'Rye'],
+            nutritionalValues: {
+              calories: '215 kcal/100g',
+              protein: '6.9g/100g',
+              carbohydrates: '40g/100g',
+              fat: '1.0g/100g'
+            }
+          };
+        }
+        
+        // Display the results
+        resultContainer.innerHTML = `
+          <h3>${sampleProduct.name}</h3>
+          <p><strong>Brand:</strong> ${sampleProduct.brand}</p>
+          <p><strong>Origin:</strong> ${sampleProduct.origin}</p>
+          <p><strong>Ingredients:</strong> ${sampleProduct.ingredients}</p>
+          <p><strong>Allergens:</strong> ${sampleProduct.allergens.join(', ') || 'None detected'}</p>
+          <h4>Nutritional Values</h4>
+          <p>Calories: ${sampleProduct.nutritionalValues.calories}</p>
+          <p>Protein: ${sampleProduct.nutritionalValues.protein}</p>
+          <p>Carbohydrates: ${sampleProduct.nutritionalValues.carbohydrates}</p>
+          <p>Fat: ${sampleProduct.nutritionalValues.fat}</p>
+          <div style="margin-top: 15px">
+            <button class="btn" onclick="alert('Feature coming soon!')"><i class="fas fa-utensils"></i> Get Recipe Suggestions</button>
+            <button class="btn" onclick="alert('Feature coming soon!')"><i class="fas fa-plus"></i> Add to Inventory</button>
+          </div>
+        `;
+      }, 2000);
+    }
+    
+    // Simple function to extract common allergens from ingredients text
+    function extractAllergens(ingredientsText) {
+      const commonAllergens = [
+        'milk', 'dairy', 'lactose', 
+        'wheat', 'gluten', 'rye', 'barley', 'oats',
+        'egg', 'eggs',
+        'nuts', 'peanuts', 'almonds', 'walnuts', 'cashews',
+        'soy', 'soybeans',
+        'fish', 'shellfish', 'crustaceans',
+        'sesame'
+      ];
+      
+      const lowerIngredients = ingredientsText.toLowerCase();
+      const foundAllergens = [];
+      
+      commonAllergens.forEach(allergen => {
+        if (lowerIngredients.includes(allergen)) {
+          // Capitalize first letter
+          foundAllergens.push(allergen.charAt(0).toUpperCase() + allergen.slice(1));
+        }
+      });
+      
+      return foundAllergens;
+    }
+  </script>
 </body>
 </html>
