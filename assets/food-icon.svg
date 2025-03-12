@@ -1,0 +1,47 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="128" fill="#0074D9"/>
+  <g transform="translate(56, 56) scale(0.78)">
+    <!-- Scanner frame -->
+    <rect x="80" y="80" width="352" height="352" rx="24" stroke="white" stroke-width="16" fill="none"/>
+    
+    <!-- Scanner lines -->
+    <line x1="112" y1="140" x2="152" y2="140" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <line x1="112" y1="140" x2="112" y2="180" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    
+    <line x1="400" y1="140" x2="360" y2="140" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <line x1="400" y1="140" x2="400" y2="180" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    
+    <line x1="112" y1="372" x2="152" y2="372" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <line x1="112" y1="372" x2="112" y2="332" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    
+    <line x1="400" y1="372" x2="360" y2="372" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    <line x1="400" y1="372" x2="400" y2="332" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Barcode lines -->
+    <rect x="144" y="176" width="16" height="160" rx="2" fill="white"/>
+    <rect x="176" y="176" width="8" height="160" rx="2" fill="white"/>
+    <rect x="200" y="176" width="24" height="160" rx="2" fill="white"/>
+    <rect x="240" y="176" width="8" height="160" rx="2" fill="white"/>
+    <rect x="264" y="176" width="16" height="160" rx="2" fill="white"/>
+    <rect x="296" y="176" width="24" height="160" rx="2" fill="white"/>
+    <rect x="336" y="176" width="8" height="160" rx="2" fill="white"/>
+    <rect x="360" y="176" width="16" height="160" rx="2" fill="white"/>
+    
+    <!-- Info icon -->
+    <circle cx="256" cy="416" r="32" fill="white"/>
+    <path d="M256 392V420M256 432V432.01" stroke="#0074D9" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Nutrition info -->
+    <circle cx="144" cy="64" r="28" fill="white"/>
+    <path d="M138 58L150 70M138 70L150 58" stroke="#0074D9" stroke-width="6" stroke-linecap="round"/>
+    
+    <circle cx="208" cy="64" r="28" fill="white"/>
+    <path d="M208 52V76M196 64H220" stroke="#0074D9" stroke-width="6" stroke-linecap="round"/>
+    
+    <circle cx="272" cy="64" r="28" fill="white"/>
+    <path d="M262 58C262 58 266 52 272 52C278 52 282 56 282 62C282 72 262 76 262 76" stroke="#0074D9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <circle cx="336" cy="64" r="28" fill="white"/>
+    <path d="M326 64H346M336 54V74" stroke="#0074D9" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>

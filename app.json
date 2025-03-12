@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Foodscan Finland",
+    "slug": "foodscan-finland",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/food-icon.svg",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/food-icon.svg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan product barcodes."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/food-icon.svg",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": ["CAMERA"]
+    },
+    "web": {
+      "favicon": "./assets/food-icon.svg"
+    }
+  }
+}
