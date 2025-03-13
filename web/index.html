@@ -1767,6 +1767,7 @@
       
       let product;
       
+      // Use AI recognition for camera and upload methods
       if (method === 'camera' || method === 'upload') {
         try {
           // Initialize AI if needed
@@ -1833,171 +1834,142 @@
           return;
         }
       }
+      // Handle barcode method
+      else if (method === 'barcode') {
+        const barcode = barcodeInput.value.trim();
+        
+        // Try to get product from local database
+        if (window.localProductDB) {
+          const localProduct = window.localProductDB.getProductByBarcode(barcode);
+          if (localProduct) {
+            console.log('Product found in local database:', localProduct);
+            product = localProduct;
+          } else {
+            console.log('Product not found in local database, offering manual entry');
+            
+            // Show product not found message and offer manual entry
+            loading.style.display = 'none';
+            resultContainer.style.display = 'none';
+            
+            // Create a product not found message with manual entry option
+            const notFoundContainer = document.createElement('div');
+            notFoundContainer.className = 'not-found-container';
+            notFoundContainer.style.textAlign = 'center';
+            notFoundContainer.style.padding = '20px';
+            notFoundContainer.style.marginTop = '20px';
+            notFoundContainer.innerHTML = `
+              <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #F44336;"></i>
+              <h3>Product Not Found</h3>
+              <p>We couldn't find a product with barcode: ${barcode}</p>
+              <p>Would you like to enter the product details manually?</p>
+              <div style="margin-top: 20px;">
+                <button id="manual-entry-redirect" class="btn primary-btn">
+                  <i class="fas fa-pencil-alt"></i> Enter Details Manually
+                </button>
+                <button id="scan-again-btn" class="btn secondary-btn" style="margin-left: 10px;">
+                  <i class="fas fa-barcode"></i> Scan Again
+                </button>
+              </div>
+            `;
+            
+            // Find the main content area to attach message to
+            const contentArea = document.querySelector('.content');
+            contentArea.appendChild(notFoundContainer);
+            
+            // Add event listener for manual entry button
+            document.getElementById('manual-entry-redirect').addEventListener('click', () => {
+              // Pre-fill barcode field if available
+              const barcodeField = document.getElementById('product-barcode');
+              if (barcodeField) {
+                barcodeField.value = barcode;
+              }
+              
+              // Remove not found message
+              contentArea.removeChild(notFoundContainer);
+              
+              // Show manual entry tab
+              activateTab('manual-entry');
+            });
+            
+            // Add event listener for scan again button
+            document.getElementById('scan-again-btn').addEventListener('click', () => {
+              // Remove not found message
+              contentArea.removeChild(notFoundContainer);
+              
+              // Show barcode scanning again
+              scanBarcodeBtn.click();
+            });
+            
+            // Exit early since we're showing custom UI
+            return;
+          }
+        } else {
+          // Fallback if local database not available
+          product = {
+            barcode: barcode,
+            name: 'Valio Laktoositon Rasvaton Maito',
+            brand: 'Valio',
+            origin: 'Finland',
+            ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
+            nutritionalValues: {
+              calories: '33 kcal/100ml',
+              protein: '3.3g/100ml',
+              carbohydrates: '4.9g/100ml',
+              fat: '0g/100ml'
+            }
+          };
+        }
+      } 
+      // Handle manual entry method
+      else if (method === 'manual') {
+        const name = document.getElementById('product-name').value;
+        const brand = document.getElementById('product-brand').value;
+        const ingredients = document.getElementById('product-ingredients').value;
+        const manualBarcode = document.getElementById('product-barcode').value.trim();
+        
+        product = {
+          name: name,
+          brand: brand,
+          origin: 'Not specified',
+          ingredients: ingredients,
+          nutritionalValues: {
+            calories: 'Not specified',
+            protein: 'Not specified',
+            carbohydrates: 'Not specified',
+            fat: 'Not specified'
+          }
+        };
+        
+        // Save to local database with barcode
+        if (window.localProductDB) {
+          // Use provided barcode or generate one if none provided
+          const productBarcode = manualBarcode || providedBarcode || ('USER_' + Date.now().toString());
+          product.barcode = productBarcode;
+          window.localProductDB.addProduct(product);
+          console.log('User-entered product added to local database with barcode:', productBarcode);
+        }
+      }
       
-      // Continue with the rest of the product analysis
+      // Hide loading and show results
       loading.style.display = 'none';
       resultContainer.style.display = 'block';
       
-      // For barcode and manual methods, use the original logic
-        
-        if (method === 'barcode') {
-          const barcode = barcodeInput.value.trim();
-          
-          // Try to get product from local database
-          if (window.localProductDB) {
-            const localProduct = window.localProductDB.getProductByBarcode(barcode);
-            if (localProduct) {
-              console.log('Product found in local database:', localProduct);
-              product = localProduct;
-            } else {
-              console.log('Product not found in local database, offering manual entry');
-              
-              // Show product not found message and offer manual entry
-              loading.style.display = 'none';
-              resultContainer.style.display = 'none';
-              
-              // Create a product not found message with manual entry option
-              const notFoundContainer = document.createElement('div');
-              notFoundContainer.className = 'not-found-container';
-              notFoundContainer.style.textAlign = 'center';
-              notFoundContainer.style.padding = '20px';
-              notFoundContainer.style.marginTop = '20px';
-              notFoundContainer.innerHTML = `
-                <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #F44336;"></i>
-                <h3>Product Not Found</h3>
-                <p>We couldn't find a product with barcode: ${barcode}</p>
-                <p>Would you like to enter the product details manually?</p>
-                <div style="margin-top: 20px;">
-                  <button id="manual-entry-redirect" class="btn primary-btn">
-                    <i class="fas fa-pencil-alt"></i> Enter Details Manually
-                  </button>
-                  <button id="scan-again-btn" class="btn secondary-btn" style="margin-left: 10px;">
-                    <i class="fas fa-barcode"></i> Scan Again
-                  </button>
-                </div>
-              `;
-              
-              // Find the main content area to attach message to
-              const contentArea = document.querySelector('.content');
-              contentArea.appendChild(notFoundContainer);
-              
-              // Add event listener for manual entry button
-              document.getElementById('manual-entry-redirect').addEventListener('click', () => {
-                // Pre-fill barcode field if available
-                const barcodeField = document.getElementById('product-barcode');
-                if (barcodeField) {
-                  barcodeField.value = barcode;
-                }
-                
-                // Remove not found message
-                contentArea.removeChild(notFoundContainer);
-                
-                // Show manual entry tab
-                activateTab('manual-entry');
-              });
-              
-              // Add event listener for scan again button
-              document.getElementById('scan-again-btn').addEventListener('click', () => {
-                // Remove not found message
-                contentArea.removeChild(notFoundContainer);
-                
-                // Show barcode scanning again
-                scanBarcodeBtn.click();
-              });
-              
-              // Exit early since we're showing custom UI
-              return;
-            }
-          } else {
-            // Fallback if local database not available
-            product = {
-              barcode: barcode,
-              name: 'Valio Laktoositon Rasvaton Maito',
-              brand: 'Valio',
-              origin: 'Finland',
-              ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
-              nutritionalValues: {
-                calories: '33 kcal/100ml',
-                protein: '3.3g/100ml',
-                carbohydrates: '4.9g/100ml',
-                fat: '0g/100ml'
-              }
-            };
-          }
-        } else if (method === 'manual') {
-          const name = document.getElementById('product-name').value;
-          const brand = document.getElementById('product-brand').value;
-          const ingredients = document.getElementById('product-ingredients').value;
-          const manualBarcode = document.getElementById('product-barcode').value.trim();
-          
-          product = {
-            name: name,
-            brand: brand,
-            origin: 'Not specified',
-            ingredients: ingredients,
-            nutritionalValues: {
-              calories: 'Not specified',
-              protein: 'Not specified',
-              carbohydrates: 'Not specified',
-              fat: 'Not specified'
-            }
-          };
-          
-          // Save to local database with barcode
-          if (window.localProductDB) {
-            // Use provided barcode or generate one if none provided
-            const productBarcode = manualBarcode || providedBarcode || ('USER_' + Date.now().toString());
-            product.barcode = productBarcode;
-            window.localProductDB.addProduct(product);
-            console.log('User-entered product added to local database with barcode:', productBarcode);
-          }
-        } else {
-          // Camera or upload - simulate by selecting a random product from local database
-          if (window.localProductDB && window.localProductDB.getAllProducts().length > 0) {
-            // Get random product from local database for demonstration
-            const allProducts = window.localProductDB.getAllProducts();
-            product = allProducts[Math.floor(Math.random() * allProducts.length)];
-            console.log('Random product selected from local database:', product);
-          } else {
-            // Fallback if local database is empty
-            product = {
-              barcode: 'IMAGE_' + Date.now().toString(),
-              name: 'Fazer Puikula Rye Bread',
-              brand: 'Fazer',
-              origin: 'Finland',
-              ingredients: 'Wholegrain rye flour, water, wheat flour, rye malt, salt, yeast, E300, E472e',
-              nutritionalValues: {
-                calories: '215 kcal/100g',
-                protein: '6.9g/100g',
-                carbohydrates: '40g/100g',
-                fat: '1.0g/100g'
-              }
-            };
-            
-            // Save to local database
-            if (window.localProductDB) {
-              window.localProductDB.addProduct(product);
-            }
-          }
-        }
-        
-        // Analyze for allergens
-        const allergens = extractAllergensWithDetails(product.ingredients);
-        
-        // Find E-codes
-        let eCodes = [];
-        try {
-          eCodes = window.extractECodesFromText ? window.extractECodesFromText(product.ingredients) : [];
-        } catch (e) {
-          console.error('Error extracting E-codes:', e);
-        }
-        
-        // Store the current product globally so it can be accessed by recipe button
-        currentDisplayedProduct = product;
-        
-        // Render product details with tabs
-        renderProductDetails(product, allergens, eCodes);
-      }, 1500);
+      // Analyze for allergens
+      const allergens = extractAllergensWithDetails(product.ingredients);
+      
+      // Find E-codes
+      let eCodes = [];
+      try {
+        eCodes = window.extractECodesFromText ? window.extractECodesFromText(product.ingredients) : [];
+      } catch (e) {
+        console.error('Error extracting E-codes:', e);
+      }
+      
+      // Store the current product globally so it can be accessed by recipe button
+      currentDisplayedProduct = product;
+      
+      // Render product details with tabs
+      renderProductDetails(product, allergens, eCodes);
     }
     
     // Function to highlight E-codes and allergens in text
