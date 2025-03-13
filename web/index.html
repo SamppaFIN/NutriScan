@@ -1063,76 +1063,73 @@
           <i class="fas fa-filter" style="margin-right: 8px;"></i> Filter Recipes
         </h3>
         
+        <div style="margin-bottom: 15px;">
+          <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px;">Active Filters:</h4>
+          <div id="active-filters" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 35px;"></div>
+        </div>
+        
         <div style="display: flex; flex-wrap: wrap; gap: 15px;">
           <!-- Dietary preferences -->
           <div style="flex: 1; min-width: 200px;">
             <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Dietary Preferences</h4>
-            <div class="toggle-container">
-              <label class="toggle-switch">
-                <input type="checkbox" id="filter-vegetarian">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">Vegetarian</span>
-              <span class="toggle-status toggle-off">Off</span>
-            </div>
-            <div class="toggle-container">
-              <label class="toggle-switch">
-                <input type="checkbox" id="filter-vegan">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">Vegan</span>
-              <span class="toggle-status toggle-off">Off</span>
-            </div>
-            <div class="toggle-container">
-              <label class="toggle-switch">
-                <input type="checkbox" id="filter-gluten-free">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">Gluten Free</span>
-              <span class="toggle-status toggle-off">Off</span>
+            <div class="filter-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <span class="filter-tag" data-filter="vegetarian" style="background-color: #4CAF50; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
+                <i class="fas fa-leaf"></i> Vegetarian
+              </span>
+              <span class="filter-tag" data-filter="vegan" style="background-color: #8BC34A; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
+                <i class="fas fa-seedling"></i> Vegan
+              </span>
+              <span class="filter-tag" data-filter="glutenFree" style="background-color: #FF9800; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
+                <i class="fas fa-wheat-awn-slash"></i> Gluten Free
+              </span>
             </div>
           </div>
           
           <!-- Ingredient constraints -->
           <div style="flex: 1; min-width: 200px;">
             <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Ingredients</h4>
-            <div class="toggle-container">
-              <label class="toggle-switch">
-                <input type="checkbox" id="filter-dairy-free">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">Dairy Free</span>
-              <span class="toggle-status toggle-off">Off</span>
-            </div>
-            <div class="toggle-container">
-              <label class="toggle-switch">
-                <input type="checkbox" id="filter-low-sugar">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">Low Sugar</span>
-              <span class="toggle-status toggle-off">Off</span>
-            </div>
-            <div class="toggle-container">
-              <label class="toggle-switch">
-                <input type="checkbox" id="filter-nut-free">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">Nut Free</span>
-              <span class="toggle-status toggle-off">Off</span>
+            <div class="filter-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <span class="filter-tag" data-filter="dairyFree" style="background-color: #03A9F4; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
+                <i class="fas fa-prescription-bottle"></i> Dairy Free
+              </span>
+              <span class="filter-tag" data-filter="lowSugar" style="background-color: #E91E63; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
+                <i class="fas fa-cubes-stacked"></i> Low Sugar
+              </span>
+              <span class="filter-tag" data-filter="nutFree" style="background-color: #9C27B0; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
+                <i class="fas fa-ban"></i> Nut Free
+              </span>
             </div>
           </div>
         </div>
         
-        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <label for="max-ingredients" style="margin-right: 10px;">Max Ingredients:</label>
-            <select id="max-ingredients" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
-              <option value="0">Any</option>
-              <option value="5">5 or less</option>
-              <option value="10">10 or less</option>
-              <option value="15">15 or less</option>
-            </select>
+        <div style="margin-top: 20px;">
+          <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Additional Options</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+            <div>
+              <label for="max-ingredients" style="margin-right: 10px;">Max Ingredients:</label>
+              <select id="max-ingredients" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                <option value="0">Any</option>
+                <option value="5">5 or less</option>
+                <option value="10">10 or less</option>
+                <option value="15">15 or less</option>
+              </select>
+            </div>
+            
+            <div style="flex-grow: 1;">
+              <input type="text" id="add-ingredient-filter" placeholder="Add ingredient to search for..." 
+                     style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+            </div>
+            
+            <button class="btn" id="add-ingredient-btn" style="background-color: #4CAF50;">
+              <i class="fas fa-plus"></i> Add
+            </button>
           </div>
+        </div>
+        
+        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <button class="btn" id="clear-filters-btn" style="background-color: #9E9E9E;">
+            <i class="fas fa-trash"></i> Clear Filters
+          </button>
           <button class="btn" id="apply-filters-btn" style="background-color: #3F51B5;">
             <i class="fas fa-check"></i> Apply Filters
           </button>
@@ -2195,7 +2192,8 @@
       dairyFree: false,
       lowSugar: false,
       nutFree: false,
-      maxIngredients: 0
+      maxIngredients: 0,
+      requiredIngredients: [] // List of ingredients that must be in the recipe
     };
     
     // Make you admin by default
@@ -2294,6 +2292,62 @@
       document.getElementById('custom-api-key').value = '';
     });
     
+    // Function to update recipe provider dropdown
+    function updateRecipeProviderDropdown() {
+      // Clear current options
+      recipeProviderSelect.innerHTML = '';
+      
+      // Add available providers based on settings
+      const availableProviders = window.recipeAdapter.getAvailableProviders();
+      
+      // Helper function to create provider option
+      function createProviderOption(value, displayName) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = displayName;
+        return option;
+      }
+      
+      // Always add local database
+      recipeProviderSelect.appendChild(createProviderOption('local', 'Local Database'));
+      
+      // Add API-based providers if available
+      if (availableProviders.includes('spoonacular')) {
+        recipeProviderSelect.appendChild(createProviderOption('spoonacular', 'Spoonacular'));
+      }
+      
+      // Only add premium providers if they're enabled
+      try {
+        const premiumSources = JSON.parse(localStorage.getItem('premiumSources') || '{}');
+        const isPremium = localStorage.getItem('isPremiumUser') === 'true';
+        
+        if (isPremium) {
+          if (premiumSources.kRuoka !== false) {
+            recipeProviderSelect.appendChild(createProviderOption('kRuoka', 'K-Ruoka'));
+          }
+          
+          if (premiumSources.pirkka !== false) {
+            recipeProviderSelect.appendChild(createProviderOption('pirkka', 'Pirkka'));
+          }
+          
+          if (premiumSources.valio !== false) {
+            recipeProviderSelect.appendChild(createProviderOption('valio', 'Valio'));
+          }
+          
+          if (premiumSources.edamam !== false && availableProviders.includes('edamam')) {
+            recipeProviderSelect.appendChild(createProviderOption('edamam', 'Edamam'));
+          }
+        }
+      } catch (e) {
+        console.error('Error updating recipe provider dropdown:', e);
+      }
+      
+      // Set selected provider to match current adapter order
+      if (window.recipeAdapter && window.recipeAdapter.providerOrder.length > 0) {
+        recipeProviderSelect.value = window.recipeAdapter.providerOrder[0];
+      }
+    }
+    
     // Save API keys and settings
     saveApiKeyButton.addEventListener('click', () => {
       const apiKeys = {};
@@ -2342,6 +2396,9 @@
           localStorage.setItem('premiumSources', JSON.stringify(enabledSources));
           localStorage.setItem('premiumFeatures', JSON.stringify(enabledFeatures));
         }
+        
+        // Update recipe provider dropdown
+        updateRecipeProviderDropdown();
         
         alert('Settings saved successfully!');
         apiKeyModal.style.display = 'none';
@@ -2681,15 +2738,173 @@
       }
     });
     
+    // Get DOM elements for the new tag-based filter system
+    const addIngredientInput = document.getElementById('add-ingredient-filter');
+    const addIngredientBtn = document.getElementById('add-ingredient-btn');
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+    const activeFiltersContainer = document.getElementById('active-filters');
+    const filterTags = document.querySelectorAll('.filter-tag');
+    
+    // Track active filters
+    const activeFilters = new Set();
+    
+    // Function to render active filters
+    function renderActiveFilters() {
+      // Clear current filters
+      activeFiltersContainer.innerHTML = '';
+      
+      // Add tag for each active filter
+      activeFilters.forEach(filter => {
+        const tag = document.createElement('span');
+        tag.className = 'active-filter-tag';
+        
+        let icon, color, label;
+        
+        // Set tag appearance based on filter type
+        if (filter === 'vegetarian') {
+          icon = 'fas fa-leaf';
+          color = '#4CAF50';
+          label = 'Vegetarian';
+        } else if (filter === 'vegan') {
+          icon = 'fas fa-seedling';
+          color = '#8BC34A';
+          label = 'Vegan';
+        } else if (filter === 'glutenFree') {
+          icon = 'fas fa-wheat-awn-slash';
+          color = '#FF9800';
+          label = 'Gluten Free';
+        } else if (filter === 'dairyFree') {
+          icon = 'fas fa-prescription-bottle';
+          color = '#03A9F4';
+          label = 'Dairy Free';
+        } else if (filter === 'lowSugar') {
+          icon = 'fas fa-cubes-stacked';
+          color = '#E91E63';
+          label = 'Low Sugar';
+        } else if (filter === 'nutFree') {
+          icon = 'fas fa-ban';
+          color = '#9C27B0';
+          label = 'Nut Free';
+        } else if (filter.startsWith('ingredient:')) {
+          icon = 'fas fa-carrot';
+          color = '#607D8B';
+          label = filter.split(':')[1];
+        }
+        
+        tag.style.backgroundColor = color;
+        tag.style.color = 'white';
+        tag.style.padding = '5px 10px';
+        tag.style.borderRadius = '15px';
+        tag.style.fontSize = '12px';
+        tag.style.margin = '0 5px 5px 0';
+        tag.style.display = 'inline-flex';
+        tag.style.alignItems = 'center';
+        
+        tag.innerHTML = `
+          <i class="${icon}" style="margin-right: 5px;"></i>
+          ${label}
+          <i class="fas fa-times" style="margin-left: 5px; cursor: pointer;"></i>
+        `;
+        
+        // Remove tag when clicked
+        tag.querySelector('.fa-times').addEventListener('click', () => {
+          activeFilters.delete(filter);
+          renderActiveFilters();
+          
+          // Update state
+          recipeFiltersState[filter] = false;
+        });
+        
+        activeFiltersContainer.appendChild(tag);
+      });
+      
+      // Show message if no active filters
+      if (activeFilters.size === 0) {
+        const emptyMessage = document.createElement('span');
+        emptyMessage.style.color = '#757575';
+        emptyMessage.style.fontStyle = 'italic';
+        emptyMessage.textContent = 'No active filters. Click on tags below to add filters.';
+        activeFiltersContainer.appendChild(emptyMessage);
+      }
+    }
+    
+    // Initialize active filters
+    renderActiveFilters();
+    
+    // Add event listeners to filter tags
+    filterTags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        const filter = tag.dataset.filter;
+        
+        if (activeFilters.has(filter)) {
+          activeFilters.delete(filter);
+          tag.style.opacity = '1';
+        } else {
+          activeFilters.add(filter);
+          tag.style.opacity = '0.7';
+        }
+        
+        renderActiveFilters();
+      });
+    });
+    
+    // Add custom ingredient filter
+    addIngredientBtn.addEventListener('click', () => {
+      const ingredient = addIngredientInput.value.trim();
+      
+      if (ingredient) {
+        const filter = `ingredient:${ingredient}`;
+        activeFilters.add(filter);
+        renderActiveFilters();
+        
+        // Add to required ingredients
+        if (!recipeFiltersState.requiredIngredients.includes(ingredient)) {
+          recipeFiltersState.requiredIngredients.push(ingredient);
+        }
+        
+        // Clear input
+        addIngredientInput.value = '';
+      }
+    });
+    
+    // Handle Enter key in ingredient input
+    addIngredientInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        addIngredientBtn.click();
+      }
+    });
+    
+    // Clear all filters
+    clearFiltersBtn.addEventListener('click', () => {
+      activeFilters.clear();
+      renderActiveFilters();
+      
+      // Reset filter state
+      recipeFiltersState.vegetarian = false;
+      recipeFiltersState.vegan = false;
+      recipeFiltersState.glutenFree = false;
+      recipeFiltersState.dairyFree = false;
+      recipeFiltersState.lowSugar = false;
+      recipeFiltersState.nutFree = false;
+      recipeFiltersState.maxIngredients = 0;
+      recipeFiltersState.requiredIngredients = [];
+      
+      // Reset UI
+      maxIngredientsSelect.value = '0';
+      filterTags.forEach(tag => {
+        tag.style.opacity = '1';
+      });
+    });
+    
     // Apply recipe filters
     applyFiltersBtn.addEventListener('click', () => {
-      // Update filter state
-      recipeFiltersState.vegetarian = filterVegetarian.checked;
-      recipeFiltersState.vegan = filterVegan.checked;
-      recipeFiltersState.glutenFree = filterGlutenFree.checked;
-      recipeFiltersState.dairyFree = filterDairyFree.checked;
-      recipeFiltersState.lowSugar = filterLowSugar.checked;
-      recipeFiltersState.nutFree = filterNutFree.checked;
+      // Update filter state from active filters
+      recipeFiltersState.vegetarian = activeFilters.has('vegetarian');
+      recipeFiltersState.vegan = activeFilters.has('vegan');
+      recipeFiltersState.glutenFree = activeFilters.has('glutenFree');
+      recipeFiltersState.dairyFree = activeFilters.has('dairyFree');
+      recipeFiltersState.lowSugar = activeFilters.has('lowSugar');
+      recipeFiltersState.nutFree = activeFilters.has('nutFree');
       recipeFiltersState.maxIngredients = parseInt(maxIngredientsSelect.value, 10);
       
       // Apply filters if we have recipes
@@ -2731,6 +2946,29 @@
         if (filters.maxIngredients > 0 && recipe.ingredients && 
             recipe.ingredients.length > filters.maxIngredients) {
           return false;
+        }
+        
+        // Check required ingredients
+        if (filters.requiredIngredients && filters.requiredIngredients.length > 0) {
+          if (!recipe.ingredients || recipe.ingredients.length === 0) {
+            return false;
+          }
+          
+          // Convert ingredients to lowercase for case-insensitive matching
+          const lowerIngredients = recipe.ingredients.map(i => i.toLowerCase());
+          
+          // Check that all required ingredients are present
+          for (const requiredIngredient of filters.requiredIngredients) {
+            const lowerRequired = requiredIngredient.toLowerCase();
+            
+            // Check if any of the recipe ingredients contain the required ingredient
+            const hasIngredient = lowerIngredients.some(ingredient => 
+              ingredient.includes(lowerRequired));
+            
+            if (!hasIngredient) {
+              return false;
+            }
+          }
         }
         
         return true;
