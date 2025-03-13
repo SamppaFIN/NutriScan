@@ -3301,31 +3301,6 @@
           });
         }
       }
-        
-      } catch (error) {
-        console.error('Error loading recipe details:', error);
-        
-        recipeContent.innerHTML = `
-          <div style="text-align: center; padding: 30px;">
-            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #F44336; margin-bottom: 15px;"></i>
-            <h3>Error Loading Recipe</h3>
-            <p>${error.message}</p>
-            <div style="margin-top: 20px;">
-              <button class="btn error-back-btn">
-                <i class="fas fa-arrow-left"></i> Back to Recipes
-              </button>
-            </div>
-          </div>
-        `;
-        
-        // Add event listener to the back button in error state
-        const errorBackButton = recipeContent.querySelector('.error-back-btn');
-        if (errorBackButton) {
-          errorBackButton.addEventListener('click', () => {
-            renderRecipeList(window.currentRecipeList || []);
-          });
-        }
-      }
     }
     
     // Toggle recipe filters visibility
