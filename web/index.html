@@ -478,6 +478,270 @@
       gap: 5px;
     }
     
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      width: 80%;
+      max-width: 900px;
+      animation: modalFadeIn 0.3s;
+    }
+    
+    @keyframes modalFadeIn {
+      from {opacity: 0; transform: translateY(-20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header h2 {
+      margin: 0;
+      color: #3F51B5;
+      font-size: 20px;
+    }
+    
+    .close-modal {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .close-modal:hover {
+      color: #555;
+    }
+    
+    .modal-body {
+      padding: 20px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    
+    .modal-footer {
+      padding: 15px 20px;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    /* Recipe card styles */
+    .recipe-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .recipe-card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .recipe-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .recipe-image {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+    
+    .recipe-details {
+      padding: 15px;
+    }
+    
+    .recipe-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    .recipe-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #757575;
+    }
+    
+    .recipe-ingredients {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 15px;
+    }
+    
+    .recipe-provider-badge {
+      display: inline-block;
+      background-color: #E8F5E9;
+      color: #2E7D32;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    
+    .recipe-detail-view {
+      margin-top: 20px;
+    }
+    
+    .recipe-detail-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+    
+    .recipe-detail-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .recipe-detail-image {
+      width: 100%;
+      max-height: 350px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .recipe-detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    .recipe-detail-meta-item {
+      display: flex;
+      align-items: center;
+      color: #555;
+    }
+    
+    .recipe-detail-meta-item i {
+      color: #3F51B5;
+      margin-right: 5px;
+    }
+    
+    .recipe-ingredients-list {
+      margin-bottom: 30px;
+    }
+    
+    .recipe-instructions-list {
+      counter-reset: step-counter;
+      list-style-type: none;
+      padding-left: 0;
+    }
+    
+    .recipe-instructions-list li {
+      position: relative;
+      padding-left: 40px;
+      margin-bottom: 15px;
+      counter-increment: step-counter;
+    }
+    
+    .recipe-instructions-list li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 28px;
+      height: 28px;
+      background-color: #3F51B5;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+    }
+    
+    .recipe-source-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #3F51B5;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .recipe-source-link:hover {
+      text-decoration: underline;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .api-key-form-section {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .recipe-provider-selector {
+      display: flex;
+      align-items: center;
+    }
+    
+    .recipe-provider-selector label {
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    
+    .recipe-provider-selector select {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    
+    .load-more-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
     @media (max-width: 600px) {
       .scanner-options {
         flex-direction: column;
@@ -496,6 +760,24 @@
       
       .tab-container {
         justify-content: space-between;
+      }
+      
+      .modal-content {
+        width: 95%;
+        margin: 5% auto;
+      }
+      
+      .recipe-list {
+        grid-template-columns: 1fr;
+      }
+      
+      .recipe-detail-title {
+        font-size: 20px;
+      }
+      
+      .recipe-detail-meta {
+        flex-direction: column;
+        gap: 8px;
       }
     }
   </style>
@@ -674,6 +956,70 @@
           <p class="feature-description">
             Automatic detection of brand, origin, and product details from images
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipe Modal -->
+  <div id="recipe-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Recipe Suggestions</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body" id="recipe-content">
+        <!-- Recipe content will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <div class="recipe-provider-selector">
+          <label for="recipe-provider">Recipe Source:</label>
+          <select id="recipe-provider">
+            <option value="local">Local Database</option>
+            <option value="spoonacular">Spoonacular</option>
+            <option value="kRuoka">K-Ruoka</option>
+            <option value="valio">Valio</option>
+            <option value="pirkka">Pirkka</option>
+            <option value="edamam">Edamam</option>
+          </select>
+        </div>
+        <button class="btn" id="recipe-api-key-button">Set API Key</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- API Key Modal -->
+  <div id="api-key-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Set API Key</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="api-key-form">
+          <div id="spoonacular-key-form" class="api-key-form-section">
+            <h3>Spoonacular API</h3>
+            <p>Get your free API key from <a href="https://spoonacular.com/food-api" target="_blank">Spoonacular</a></p>
+            <div class="form-group">
+              <label for="spoonacular-key">API Key:</label>
+              <input type="text" id="spoonacular-key" placeholder="Enter Spoonacular API key">
+            </div>
+          </div>
+          
+          <div id="edamam-key-form" class="api-key-form-section">
+            <h3>Edamam API</h3>
+            <p>Get your free API key from <a href="https://developer.edamam.com/edamam-recipe-api" target="_blank">Edamam</a></p>
+            <div class="form-group">
+              <label for="edamam-app-id">Application ID:</label>
+              <input type="text" id="edamam-app-id" placeholder="Enter Edamam App ID">
+            </div>
+            <div class="form-group">
+              <label for="edamam-app-key">Application Key:</label>
+              <input type="text" id="edamam-app-key" placeholder="Enter Edamam App Key">
+            </div>
+          </div>
+          
+          <button class="btn" id="save-api-key-button">Save API Key</button>
         </div>
       </div>
     </div>
@@ -1444,6 +1790,335 @@
       }
       
       return foundAllergens;
+    }
+    
+    // Recipe functionality
+    const recipeModal = document.getElementById('recipe-modal');
+    const recipeContent = document.getElementById('recipe-content');
+    const apiKeyModal = document.getElementById('api-key-modal');
+    const recipeProviderSelect = document.getElementById('recipe-provider');
+    const recipeApiKeyButton = document.getElementById('recipe-api-key-button');
+    const saveApiKeyButton = document.getElementById('save-api-key-button');
+    const closeModalButtons = document.querySelectorAll('.close-modal');
+    
+    // Close modals when clicking the X button
+    closeModalButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        recipeModal.style.display = 'none';
+        apiKeyModal.style.display = 'none';
+      });
+    });
+    
+    // Close modals when clicking outside the content
+    window.addEventListener('click', (event) => {
+      if (event.target === recipeModal) {
+        recipeModal.style.display = 'none';
+      }
+      if (event.target === apiKeyModal) {
+        apiKeyModal.style.display = 'none';
+      }
+    });
+    
+    // Show API key modal when button is clicked
+    recipeApiKeyButton.addEventListener('click', () => {
+      apiKeyModal.style.display = 'block';
+      
+      // Load saved API keys if any
+      try {
+        const savedKeys = JSON.parse(localStorage.getItem('recipeApiKeys') || '{}');
+        
+        if (savedKeys.spoonacular) {
+          document.getElementById('spoonacular-key').value = savedKeys.spoonacular;
+        }
+        
+        if (savedKeys.edamam) {
+          const parts = savedKeys.edamam.split('|');
+          if (parts.length === 2) {
+            document.getElementById('edamam-app-id').value = parts[0];
+            document.getElementById('edamam-app-key').value = parts[1];
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load API keys:', e);
+      }
+    });
+    
+    // Save API keys
+    saveApiKeyButton.addEventListener('click', () => {
+      const apiKeys = {};
+      
+      const spoonacularKey = document.getElementById('spoonacular-key').value.trim();
+      if (spoonacularKey) {
+        apiKeys.spoonacular = spoonacularKey;
+      }
+      
+      const edamamAppId = document.getElementById('edamam-app-id').value.trim();
+      const edamamAppKey = document.getElementById('edamam-app-key').value.trim();
+      if (edamamAppId && edamamAppKey) {
+        apiKeys.edamam = `${edamamAppId}|${edamamAppKey}`;
+      }
+      
+      // Save to local storage
+      try {
+        localStorage.setItem('recipeApiKeys', JSON.stringify(apiKeys));
+        
+        // Update adapter with new keys
+        if (window.recipeAdapter) {
+          if (apiKeys.spoonacular) {
+            window.recipeAdapter.setApiKey('spoonacular', apiKeys.spoonacular);
+          }
+          if (apiKeys.edamam) {
+            window.recipeAdapter.setApiKey('edamam', apiKeys.edamam);
+          }
+        }
+        
+        alert('API keys saved successfully!');
+        apiKeyModal.style.display = 'none';
+      } catch (e) {
+        console.error('Failed to save API keys:', e);
+        alert('Failed to save API keys. Please try again.');
+      }
+    });
+    
+    // Change provider order when dropdown selection changes
+    recipeProviderSelect.addEventListener('change', () => {
+      const selectedProvider = recipeProviderSelect.value;
+      
+      if (window.recipeAdapter) {
+        // Move selected provider to the front of the list
+        const currentOrder = window.recipeAdapter.providerOrder;
+        const newOrder = [selectedProvider, ...currentOrder.filter(p => p !== selectedProvider)];
+        window.recipeAdapter.setProviderOrder(newOrder);
+        
+        // Refresh recipes if we have a current product
+        if (currentProduct) {
+          showRecipeSuggestions(currentProduct);
+        }
+      }
+    });
+    
+    // Current product being viewed
+    let currentProduct = null;
+    
+    // Show recipe suggestions for a product
+    async function showRecipeSuggestions(product) {
+      currentProduct = product;
+      
+      // Show the modal
+      recipeModal.style.display = 'block';
+      
+      // Show loading state
+      recipeContent.innerHTML = `
+        <div style="text-align: center; padding: 30px;">
+          <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3F51B5;"></i>
+          <p style="margin-top: 15px;">Loading recipe suggestions...</p>
+        </div>
+      `;
+      
+      try {
+        // Check if recipe adapter is available
+        if (!window.recipeAdapter) {
+          throw new Error('Recipe adapter not loaded');
+        }
+        
+        // Get recipes from adapter
+        const recipes = await window.recipeAdapter.getRecipesForProduct(product);
+        
+        if (recipes.length === 0) {
+          recipeContent.innerHTML = `
+            <div style="text-align: center; padding: 30px;">
+              <i class="fas fa-utensils" style="font-size: 48px; color: #757575; margin-bottom: 15px;"></i>
+              <h3>No Recipes Found</h3>
+              <p>We couldn't find any recipes for ${product.name}.</p>
+              <p>Try setting up API keys for more recipe sources, or try a different product.</p>
+            </div>
+          `;
+          return;
+        }
+        
+        // Store for later use with back button
+        window.lastRecipeList = recipes;
+        
+        // Render the recipes
+        renderRecipeList(recipes);
+      } catch (error) {
+        console.error('Error loading recipes:', error);
+        
+        recipeContent.innerHTML = `
+          <div style="text-align: center; padding: 30px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #F44336; margin-bottom: 15px;"></i>
+            <h3>Error Loading Recipes</h3>
+            <p>${error.message}</p>
+            <p>Please try again or set up API keys for recipe sources.</p>
+          </div>
+        `;
+      }
+    }
+    
+    // Render a list of recipes
+    function renderRecipeList(recipes) {
+      const html = `
+        <h3>Recipe Suggestions for ${currentProduct.name}</h3>
+        <p>Here are some recipes you can make with this product:</p>
+        
+        <div class="recipe-list">
+          ${recipes.map(recipe => renderRecipeCard(recipe)).join('')}
+        </div>
+      `;
+      
+      recipeContent.innerHTML = html;
+      
+      // Add click events to recipe cards
+      document.querySelectorAll('.recipe-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const recipeId = card.dataset.id;
+          const provider = card.dataset.provider;
+          
+          showRecipeDetails(recipeId, provider);
+        });
+      });
+    }
+    
+    // Render a recipe card
+    function renderRecipeCard(recipe) {
+      const placeholderImage = 'https://via.placeholder.com/300x200?text=No+Image';
+      const imageUrl = recipe.imageUrl || placeholderImage;
+      
+      // Format provider name for display
+      let providerDisplay = recipe.provider;
+      if (recipe.provider === 'local') {
+        providerDisplay = 'Local Database';
+      } else if (recipe.provider === 'kRuoka') {
+        providerDisplay = 'K-Ruoka';
+      } else {
+        // Capitalize first letter
+        providerDisplay = recipe.provider.charAt(0).toUpperCase() + recipe.provider.slice(1);
+      }
+      
+      // Get first few ingredients to show in preview
+      const ingredientPreview = recipe.ingredients && recipe.ingredients.length > 0
+        ? recipe.ingredients.slice(0, 3).join(', ') + (recipe.ingredients.length > 3 ? '...' : '')
+        : 'Ingredients not available';
+      
+      return `
+        <div class="recipe-card" data-id="${recipe.id}" data-provider="${recipe.provider}">
+          <img src="${imageUrl}" alt="${recipe.title}" class="recipe-image">
+          <div class="recipe-details">
+            <span class="recipe-provider-badge">${providerDisplay}</span>
+            <h3 class="recipe-title">${recipe.title}</h3>
+            <div class="recipe-info">
+              ${recipe.prepTime ? `<span><i class="far fa-clock"></i> ${recipe.prepTime}</span>` : ''}
+              ${recipe.servings ? `<span><i class="fas fa-users"></i> ${recipe.servings} servings</span>` : ''}
+            </div>
+            <div class="recipe-ingredients">${ingredientPreview}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Show details for a specific recipe
+    async function showRecipeDetails(recipeId, provider) {
+      // Show loading state
+      recipeContent.innerHTML = `
+        <div style="text-align: center; padding: 30px;">
+          <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3F51B5;"></i>
+          <p style="margin-top: 15px;">Loading recipe details...</p>
+        </div>
+      `;
+      
+      try {
+        // Get recipe details from adapter
+        const recipe = await window.recipeAdapter.getRecipeById(recipeId, provider);
+        
+        if (!recipe) {
+          throw new Error('Recipe not found');
+        }
+        
+        // Format provider name for display
+        let providerDisplay = recipe.provider;
+        if (recipe.provider === 'local') {
+          providerDisplay = 'Local Database';
+        } else if (recipe.provider === 'kRuoka') {
+          providerDisplay = 'K-Ruoka';
+        } else {
+          // Capitalize first letter
+          providerDisplay = recipe.provider.charAt(0).toUpperCase() + recipe.provider.slice(1);
+        }
+        
+        const placeholderImage = 'https://via.placeholder.com/600x400?text=No+Image';
+        const imageUrl = recipe.imageUrl || placeholderImage;
+        
+        const html = `
+          <div class="recipe-detail-view">
+            <div style="margin-bottom: 20px;">
+              <button class="btn" onclick="renderRecipeList(${JSON.stringify(window.lastRecipeList)})">
+                <i class="fas fa-arrow-left"></i> Back to Recipes
+              </button>
+            </div>
+            
+            <div class="recipe-detail-heading">
+              <div>
+                <span class="recipe-provider-badge">${providerDisplay}</span>
+                <h2 class="recipe-detail-title">${recipe.title}</h2>
+              </div>
+            </div>
+            
+            <img src="${imageUrl}" alt="${recipe.title}" class="recipe-detail-image">
+            
+            <div class="recipe-detail-meta">
+              ${recipe.prepTime ? `
+                <div class="recipe-detail-meta-item">
+                  <i class="far fa-clock"></i> Prep Time: ${recipe.prepTime}
+                </div>
+              ` : ''}
+              
+              ${recipe.servings ? `
+                <div class="recipe-detail-meta-item">
+                  <i class="fas fa-users"></i> Servings: ${recipe.servings}
+                </div>
+              ` : ''}
+            </div>
+            
+            <h3>Ingredients</h3>
+            <div class="recipe-ingredients-list">
+              <ul>
+                ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
+              </ul>
+            </div>
+            
+            ${recipe.instructions && recipe.instructions.length > 0 ? `
+              <h3>Instructions</h3>
+              <ol class="recipe-instructions-list">
+                ${recipe.instructions.map(step => `<li>${step}</li>`).join('')}
+              </ol>
+            ` : ''}
+            
+            ${recipe.url ? `
+              <a href="${recipe.url}" target="_blank" class="recipe-source-link">
+                <i class="fas fa-external-link-alt"></i> View Original Recipe
+              </a>
+            ` : ''}
+          </div>
+        `;
+        
+        recipeContent.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading recipe details:', error);
+        
+        recipeContent.innerHTML = `
+          <div style="text-align: center; padding: 30px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #F44336; margin-bottom: 15px;"></i>
+            <h3>Error Loading Recipe</h3>
+            <p>${error.message}</p>
+            <div style="margin-top: 20px;">
+              <button class="btn" onclick="renderRecipeList(${JSON.stringify(window.lastRecipeList)})">
+                <i class="fas fa-arrow-left"></i> Back to Recipes
+              </button>
+            </div>
+          </div>
+        `;
+      }
     }
   </script>
 </body>
