@@ -2669,6 +2669,157 @@
         }
       }
     }
+    
+    // Toggle recipe filters visibility
+    toggleFiltersBtn.addEventListener('click', () => {
+      if (recipeFilters.style.display === 'none' || !recipeFilters.style.display) {
+        recipeFilters.style.display = 'block';
+        toggleFiltersBtn.innerHTML = '<i class="fas fa-times"></i> Hide Filters';
+      } else {
+        recipeFilters.style.display = 'none';
+        toggleFiltersBtn.innerHTML = '<i class="fas fa-filter"></i> Filter Options';
+      }
+    });
+    
+    // Apply recipe filters
+    applyFiltersBtn.addEventListener('click', () => {
+      // Update filter state
+      recipeFiltersState.vegetarian = filterVegetarian.checked;
+      recipeFiltersState.vegan = filterVegan.checked;
+      recipeFiltersState.glutenFree = filterGlutenFree.checked;
+      recipeFiltersState.dairyFree = filterDairyFree.checked;
+      recipeFiltersState.lowSugar = filterLowSugar.checked;
+      recipeFiltersState.nutFree = filterNutFree.checked;
+      recipeFiltersState.maxIngredients = parseInt(maxIngredientsSelect.value, 10);
+      
+      // Apply filters if we have recipes
+      if (window.lastRecipeList && window.lastRecipeList.length > 0) {
+        const filteredRecipes = filterRecipes(window.lastRecipeList, recipeFiltersState);
+        renderRecipeList(filteredRecipes);
+      }
+    });
+    
+    // Function to filter recipes based on criteria
+    function filterRecipes(recipes, filters) {
+      return recipes.filter(recipe => {
+        // Check dietary preferences
+        if (filters.vegetarian && !isVegetarian(recipe)) {
+          return false;
+        }
+        
+        if (filters.vegan && !isVegan(recipe)) {
+          return false;
+        }
+        
+        if (filters.glutenFree && !isGlutenFree(recipe)) {
+          return false;
+        }
+        
+        if (filters.dairyFree && !isDairyFree(recipe)) {
+          return false;
+        }
+        
+        if (filters.lowSugar && !isLowSugar(recipe)) {
+          return false;
+        }
+        
+        if (filters.nutFree && !isNutFree(recipe)) {
+          return false;
+        }
+        
+        // Check max ingredients
+        if (filters.maxIngredients > 0 && recipe.ingredients && 
+            recipe.ingredients.length > filters.maxIngredients) {
+          return false;
+        }
+        
+        return true;
+      });
+    }
+    
+    // Helper functions to determine dietary characteristics
+    function isVegetarian(recipe) {
+      if (recipe.vegetarian !== undefined) {
+        return recipe.vegetarian;
+      }
+      
+      // Check ingredients for meat products
+      const nonVegetarianTerms = ['beef', 'chicken', 'pork', 'meat', 'fish', 'salmon', 'tuna', 
+                                'liha', 'kana', 'possu', 'nauta', 'kala', 'lohi'];
+      
+      return !hasAnyIngredientTerm(recipe, nonVegetarianTerms);
+    }
+    
+    function isVegan(recipe) {
+      if (recipe.vegan !== undefined) {
+        return recipe.vegan;
+      }
+      
+      // Check for animal products
+      const nonVeganTerms = ['meat', 'fish', 'chicken', 'beef', 'pork', 'egg', 'milk', 'cheese', 'cream', 'butter', 'honey',
+                           'liha', 'kala', 'kana', 'nauta', 'possu', 'muna', 'maito', 'juusto', 'kerma', 'voi', 'hunaja'];
+      
+      return !hasAnyIngredientTerm(recipe, nonVeganTerms);
+    }
+    
+    function isGlutenFree(recipe) {
+      if (recipe.glutenFree !== undefined) {
+        return recipe.glutenFree;
+      }
+      
+      // Check for gluten-containing ingredients
+      const glutenTerms = ['wheat', 'flour', 'bread', 'pasta', 'couscous', 'barley', 'rye', 
+                         'vehnä', 'jauho', 'leipä', 'pasta', 'ohra', 'ruis'];
+      
+      return !hasAnyIngredientTerm(recipe, glutenTerms);
+    }
+    
+    function isDairyFree(recipe) {
+      if (recipe.dairyFree !== undefined) {
+        return recipe.dairyFree;
+      }
+      
+      // Check for dairy products
+      const dairyTerms = ['milk', 'cheese', 'cream', 'butter', 'yogurt', 'sour cream', 
+                        'maito', 'juusto', 'kerma', 'voi', 'jogurtti', 'hapankerma'];
+      
+      return !hasAnyIngredientTerm(recipe, dairyTerms);
+    }
+    
+    function isLowSugar(recipe) {
+      if (recipe.lowSugar !== undefined) {
+        return recipe.lowSugar;
+      }
+      
+      // Check for high sugar ingredients
+      const sugarTerms = ['sugar', 'syrup', 'honey', 'chocolate', 'candy', 'jam', 'marshmallow',
+                        'sokeri', 'siirappi', 'hunaja', 'suklaa', 'karkki', 'hillo'];
+      
+      return !hasAnyIngredientTerm(recipe, sugarTerms);
+    }
+    
+    function isNutFree(recipe) {
+      if (recipe.nutFree !== undefined) {
+        return recipe.nutFree;
+      }
+      
+      // Check for nuts
+      const nutTerms = ['nut', 'almond', 'cashew', 'pecan', 'walnut', 'hazelnut', 'pistachio', 'peanut',
+                       'pähkinä', 'manteli', 'cashew', 'pekaani', 'saksanpähkinä', 'hasselpähkinä', 'pistaasi', 'maapähkinä'];
+      
+      return !hasAnyIngredientTerm(recipe, nutTerms);
+    }
+    
+    function hasAnyIngredientTerm(recipe, terms) {
+      if (!recipe.ingredients || recipe.ingredients.length === 0) {
+        return false;
+      }
+      
+      return recipe.ingredients.some(ingredient => {
+        const lowerIngredient = ingredient.toLowerCase();
+        return terms.some(term => lowerIngredient.includes(term.toLowerCase()));
+      });
+    }
   </script>
 </body>
 </html>
