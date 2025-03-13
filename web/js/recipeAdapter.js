@@ -13,6 +13,9 @@
  * - Edamam
  */
 
+// Export statement for the module
+export { RecipeAdapter };
+
 class RecipeAdapter {
   constructor() {
     this.apiKeys = {};
@@ -298,6 +301,54 @@ class LocalRecipeProvider extends RecipeProvider {
    */
   prepopulateRecipes() {
     this.recipes = [
+      {
+        id: 'milk-recipe-1',
+        title: 'Valio Milk Hot Chocolate',
+        ingredients: [
+          '500 ml Valio milk',
+          '3 tbsp cocoa powder',
+          '2 tbsp sugar',
+          '1 tsp vanilla extract',
+          'Whipped cream (optional)',
+          'Cinnamon (optional)'
+        ],
+        instructions: [
+          'Pour milk into a saucepan and heat on medium-low heat.',
+          'When milk is warm but not boiling, add cocoa powder and sugar.',
+          'Whisk continuously to prevent lumps from forming.',
+          'Add vanilla extract and continue to heat until hot but not boiling.',
+          'Pour into mugs and top with whipped cream and a sprinkle of cinnamon if desired.'
+        ],
+        prepTime: '10 minutes',
+        servings: 2,
+        imageUrl: '',
+        matchingProducts: ['milk', 'valio', 'lactose-free']
+      },
+      {
+        id: 'milk-recipe-2',
+        title: 'Finnish Milk Kiisseli (Berry Pudding)',
+        ingredients: [
+          '500 ml Valio milk',
+          '200 g mixed berries (fresh or frozen)',
+          '3 tbsp sugar',
+          '2 tbsp potato starch',
+          '3 tbsp cold water',
+          'Pinch of salt'
+        ],
+        instructions: [
+          'Mix berries and sugar in a saucepan, add a splash of water.',
+          'Bring to a simmer over medium heat until berries soften.',
+          'Mix potato starch with cold water until smooth.',
+          'Slowly pour the starch mixture into the simmering berries while stirring constantly.',
+          'Continue stirring until the mixture thickens (about 1 minute).',
+          'Remove from heat and pour into serving bowls.',
+          'Let cool slightly, then serve with cold milk poured over the top.'
+        ],
+        prepTime: '15 minutes',
+        servings: 4,
+        imageUrl: '',
+        matchingProducts: ['milk', 'valio', 'berries', 'lactose-free']
+      },
       {
         id: 'local-1',
         title: 'Perunasose (Mashed Potatoes)',

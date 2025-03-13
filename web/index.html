@@ -1961,6 +1961,9 @@
     const customApiSection = document.getElementById('custom-api-section');
     const premiumUpgradeBtn = document.getElementById('premium-upgrade-btn');
     
+    // Make you admin by default
+    localStorage.setItem('isPremiumUser', 'true');
+    
     // Load premium status
     try {
       const isPremium = localStorage.getItem('isPremiumUser') === 'true';
@@ -1968,7 +1971,7 @@
       if (isPremium) {
         premiumFeatures.style.display = 'block';
         customApiSection.style.display = 'block';
-        premiumUpgradeBtn.textContent = 'Premium Active';
+        premiumUpgradeBtn.innerHTML = '<i class="fas fa-crown"></i> Premium Active';
         premiumUpgradeBtn.style.backgroundColor = '#4CAF50';
       }
     } catch (e) {
