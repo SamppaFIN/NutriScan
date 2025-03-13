@@ -997,6 +997,74 @@
       </div>
       <div class="modal-body">
         <div id="api-key-form">
+          <!-- Premium User Section -->
+          <div class="premium-user-section" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+            <h3 style="display: flex; align-items: center;">
+              <i class="fas fa-crown" style="color: gold; margin-right: 10px;"></i> Premium User
+            </h3>
+            <p>Unlock additional recipe sources and features with a premium subscription.</p>
+            
+            <div class="form-group" style="display: flex; align-items: center;">
+              <input type="checkbox" id="premium-user-toggle" style="margin-right: 10px;">
+              <label for="premium-user-toggle">Enable Premium Features</label>
+            </div>
+            
+            <div id="premium-features" style="background-color: #f7f7f7; padding: 15px; border-radius: 8px; margin-top: 10px; display: none;">
+              <h4>Premium Recipe Sources</h4>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                <div style="flex: 1; min-width: 200px;">
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-k-ruoka" checked>
+                    <label for="enable-k-ruoka">K-Ruoka Recipes</label>
+                  </div>
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-pirkka" checked>
+                    <label for="enable-pirkka">Pirkka Recipes</label>
+                  </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-valio" checked>
+                    <label for="enable-valio">Valio Recipes</label>
+                  </div>
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-edamam" checked>
+                    <label for="enable-edamam">Edamam Recipes</label>
+                  </div>
+                </div>
+              </div>
+              
+              <h4 style="margin-top: 15px;">Premium Features</h4>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+                <div style="flex: 1; min-width: 200px;">
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-nutritional-analysis" checked>
+                    <label for="enable-nutritional-analysis">Advanced Nutritional Analysis</label>
+                  </div>
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-meal-planning" checked>
+                    <label for="enable-meal-planning">Meal Planning</label>
+                  </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-custom-sources" checked>
+                    <label for="enable-custom-sources">Custom Recipe Sources</label>
+                  </div>
+                  <div class="form-group">
+                    <input type="checkbox" id="enable-unlimited-storage" checked>
+                    <label for="enable-unlimited-storage">Unlimited Storage</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <button class="btn" id="premium-upgrade-btn" style="margin-top: 15px; background-color: #9c27b0; display: inline-block;">
+              <i class="fas fa-crown"></i> Upgrade to Premium
+            </button>
+          </div>
+          
+          <!-- API Key Sections -->
           <div id="spoonacular-key-form" class="api-key-form-section">
             <h3>Spoonacular API</h3>
             <p>Get your free API key from <a href="https://spoonacular.com/food-api" target="_blank">Spoonacular</a></p>
@@ -1019,7 +1087,27 @@
             </div>
           </div>
           
-          <button class="btn" id="save-api-key-button">Save API Key</button>
+          <div id="custom-api-section" style="display: none;" class="api-key-form-section">
+            <h3>Custom Recipe API</h3>
+            <p>For premium users: Add your own custom recipe API</p>
+            <div class="form-group">
+              <label for="custom-api-name">API Name:</label>
+              <input type="text" id="custom-api-name" placeholder="Enter API Name">
+            </div>
+            <div class="form-group">
+              <label for="custom-api-url">API URL:</label>
+              <input type="text" id="custom-api-url" placeholder="Enter API URL">
+            </div>
+            <div class="form-group">
+              <label for="custom-api-key">API Key:</label>
+              <input type="text" id="custom-api-key" placeholder="Enter API Key">
+            </div>
+            <button class="btn" id="add-custom-api-btn" style="background-color: #4CAF50;">
+              <i class="fas fa-plus"></i> Add Custom API
+            </button>
+          </div>
+          
+          <button class="btn" id="save-api-key-button">Save Settings</button>
         </div>
       </div>
     </div>
@@ -1030,6 +1118,7 @@
     import { allergenDatabase } from './js/allergenDatabase.js';
     import { eCodeDatabase, getECodeInfo, extractECodesFromText, categorizeECodesByRisk } from './js/eCodeDatabase.js';
     import { localProductDB } from './js/localProductDatabase.js';
+    import { RecipeAdapter } from './js/recipeAdapter.js';
     
     // Make them available globally
     window.allergenDatabase = allergenDatabase;
@@ -1038,6 +1127,15 @@
     window.extractECodesFromText = extractECodesFromText;
     window.categorizeECodesByRisk = categorizeECodesByRisk;
     window.localProductDB = localProductDB;
+    
+    // Initialize recipe adapter
+    const recipeAdapter = new RecipeAdapter();
+    
+    // Load saved API keys
+    recipeAdapter.loadApiKeys();
+    
+    // Make adapter available globally
+    window.recipeAdapter = recipeAdapter;
   </script>
 
   <script>
@@ -1264,6 +1362,9 @@
       analyzeProduct('manual');
     });
     
+    // Current displayed product
+    let currentDisplayedProduct = null;
+    
     // Analyze product and display results
     function analyzeProduct(method) {
       // Hide all input containers
@@ -1395,6 +1496,9 @@
           console.error('Error extracting E-codes:', e);
         }
         
+        // Store the current product globally so it can be accessed by recipe button
+        currentDisplayedProduct = product;
+        
         // Render product details with tabs
         renderProductDetails(product, allergens, eCodes);
       }, 1500);
@@ -1482,7 +1586,7 @@
           </div>
           
           <div style="margin-top: 20px">
-            <button class="btn" onclick="showRecipeSuggestions(product)"><i class="fas fa-utensils"></i> Get Recipe Suggestions</button>
+            <button class="btn" id="get-recipes-btn"><i class="fas fa-utensils"></i> Get Recipe Suggestions</button>
             <button class="btn" onclick="alert('Feature coming soon!')"><i class="fas fa-plus"></i> Add to Inventory</button>
           </div>
         </div>
@@ -1591,6 +1695,14 @@
           }
         });
       });
+      
+      // Add click event to recipe button
+      const getRecipesBtn = document.getElementById('get-recipes-btn');
+      if (getRecipesBtn) {
+        getRecipesBtn.addEventListener('click', () => {
+          showRecipeSuggestions(currentDisplayedProduct);
+        });
+      }
     }
     
     function renderAllergenDetails(allergen) {
@@ -1843,7 +1955,76 @@
       }
     });
     
-    // Save API keys
+    // Premium user toggle
+    const premiumUserToggle = document.getElementById('premium-user-toggle');
+    const premiumFeatures = document.getElementById('premium-features');
+    const customApiSection = document.getElementById('custom-api-section');
+    const premiumUpgradeBtn = document.getElementById('premium-upgrade-btn');
+    
+    // Load premium status
+    try {
+      const isPremium = localStorage.getItem('isPremiumUser') === 'true';
+      premiumUserToggle.checked = isPremium;
+      if (isPremium) {
+        premiumFeatures.style.display = 'block';
+        customApiSection.style.display = 'block';
+        premiumUpgradeBtn.textContent = 'Premium Active';
+        premiumUpgradeBtn.style.backgroundColor = '#4CAF50';
+      }
+    } catch (e) {
+      console.error('Failed to load premium status:', e);
+    }
+    
+    // Premium user toggle
+    premiumUserToggle.addEventListener('change', () => {
+      const isPremium = premiumUserToggle.checked;
+      
+      if (isPremium) {
+        premiumFeatures.style.display = 'block';
+        customApiSection.style.display = 'block';
+        premiumUpgradeBtn.innerHTML = '<i class="fas fa-crown"></i> Premium Active';
+        premiumUpgradeBtn.style.backgroundColor = '#4CAF50';
+      } else {
+        premiumFeatures.style.display = 'none';
+        customApiSection.style.display = 'none';
+        premiumUpgradeBtn.innerHTML = '<i class="fas fa-crown"></i> Upgrade to Premium';
+        premiumUpgradeBtn.style.backgroundColor = '#9c27b0';
+      }
+      
+      localStorage.setItem('isPremiumUser', isPremium);
+    });
+    
+    // Premium upgrade button
+    premiumUpgradeBtn.addEventListener('click', () => {
+      if (!premiumUserToggle.checked) {
+        // For demo purposes, just toggle premium status
+        premiumUserToggle.checked = true;
+        premiumUserToggle.dispatchEvent(new Event('change'));
+        alert('Premium features activated for demonstration purposes!');
+      }
+    });
+    
+    // Add custom API button
+    const addCustomApiBtn = document.getElementById('add-custom-api-btn');
+    addCustomApiBtn.addEventListener('click', () => {
+      const name = document.getElementById('custom-api-name').value.trim();
+      const url = document.getElementById('custom-api-url').value.trim();
+      const key = document.getElementById('custom-api-key').value.trim();
+      
+      if (!name || !url) {
+        alert('Please enter at least API name and URL');
+        return;
+      }
+      
+      alert(`Custom API "${name}" added successfully!`);
+      
+      // Reset fields
+      document.getElementById('custom-api-name').value = '';
+      document.getElementById('custom-api-url').value = '';
+      document.getElementById('custom-api-key').value = '';
+    });
+    
+    // Save API keys and settings
     saveApiKeyButton.addEventListener('click', () => {
       const apiKeys = {};
       
@@ -1872,11 +2053,31 @@
           }
         }
         
-        alert('API keys saved successfully!');
+        // Save premium settings
+        if (premiumUserToggle.checked) {
+          const enabledSources = {
+            kRuoka: document.getElementById('enable-k-ruoka').checked,
+            pirkka: document.getElementById('enable-pirkka').checked,
+            valio: document.getElementById('enable-valio').checked,
+            edamam: document.getElementById('enable-edamam').checked
+          };
+          
+          const enabledFeatures = {
+            nutritionalAnalysis: document.getElementById('enable-nutritional-analysis').checked,
+            mealPlanning: document.getElementById('enable-meal-planning').checked,
+            customSources: document.getElementById('enable-custom-sources').checked,
+            unlimitedStorage: document.getElementById('enable-unlimited-storage').checked
+          };
+          
+          localStorage.setItem('premiumSources', JSON.stringify(enabledSources));
+          localStorage.setItem('premiumFeatures', JSON.stringify(enabledFeatures));
+        }
+        
+        alert('Settings saved successfully!');
         apiKeyModal.style.display = 'none';
       } catch (e) {
-        console.error('Failed to save API keys:', e);
-        alert('Failed to save API keys. Please try again.');
+        console.error('Failed to save settings:', e);
+        alert('Failed to save settings. Please try again.');
       }
     });
     
