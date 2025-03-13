@@ -1092,9 +1092,13 @@
             </h3>
             <p>Unlock additional recipe sources and features with a premium subscription.</p>
             
-            <div class="form-group" style="display: flex; align-items: center;">
-              <input type="checkbox" id="premium-user-toggle" style="margin-right: 10px;">
-              <label for="premium-user-toggle">Enable Premium Features</label>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="premium-user-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Enable Premium Features</span>
+              <span class="toggle-status toggle-off">Disabled</span>
             </div>
             
             <div id="premium-features" style="background-color: #f7f7f7; padding: 15px; border-radius: 8px; margin-top: 10px; display: none;">
@@ -2097,6 +2101,36 @@
     } catch (e) {
       console.error('Failed to load premium status:', e);
     }
+    
+    // Function to update toggle status text
+    function updateToggleStatus(toggleInput) {
+      const toggleContainer = toggleInput.closest('.toggle-container');
+      if (!toggleContainer) return;
+      
+      const statusElement = toggleContainer.querySelector('.toggle-status');
+      if (!statusElement) return;
+      
+      if (toggleInput.checked) {
+        statusElement.textContent = 'Enabled';
+        statusElement.classList.remove('toggle-off');
+        statusElement.classList.add('toggle-on');
+      } else {
+        statusElement.textContent = 'Disabled';
+        statusElement.classList.remove('toggle-on');
+        statusElement.classList.add('toggle-off');
+      }
+    }
+    
+    // Set up toggle event listeners
+    document.querySelectorAll('.toggle-container input[type="checkbox"]').forEach(toggle => {
+      // Initialize status
+      updateToggleStatus(toggle);
+      
+      // Add change listener
+      toggle.addEventListener('change', () => {
+        updateToggleStatus(toggle);
+      });
+    });
     
     // Premium user toggle
     premiumUserToggle.addEventListener('change', () => {
