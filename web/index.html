@@ -1056,22 +1056,112 @@
         <h2>Recipe Suggestions</h2>
         <span class="close-modal">&times;</span>
       </div>
+      
+      <!-- Recipe filters -->
+      <div class="recipe-filters" id="recipe-filters" style="padding: 15px; background-color: #f5f5f5; margin-bottom: 15px; border-bottom: 1px solid #e0e0e0; display: none;">
+        <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 16px;">
+          <i class="fas fa-filter" style="margin-right: 8px;"></i> Filter Recipes
+        </h3>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+          <!-- Dietary preferences -->
+          <div style="flex: 1; min-width: 200px;">
+            <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Dietary Preferences</h4>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="filter-vegetarian">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Vegetarian</span>
+              <span class="toggle-status toggle-off">Off</span>
+            </div>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="filter-vegan">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Vegan</span>
+              <span class="toggle-status toggle-off">Off</span>
+            </div>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="filter-gluten-free">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Gluten Free</span>
+              <span class="toggle-status toggle-off">Off</span>
+            </div>
+          </div>
+          
+          <!-- Ingredient constraints -->
+          <div style="flex: 1; min-width: 200px;">
+            <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Ingredients</h4>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="filter-dairy-free">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Dairy Free</span>
+              <span class="toggle-status toggle-off">Off</span>
+            </div>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="filter-low-sugar">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Low Sugar</span>
+              <span class="toggle-status toggle-off">Off</span>
+            </div>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="filter-nut-free">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Nut Free</span>
+              <span class="toggle-status toggle-off">Off</span>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <label for="max-ingredients" style="margin-right: 10px;">Max Ingredients:</label>
+            <select id="max-ingredients" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+              <option value="0">Any</option>
+              <option value="5">5 or less</option>
+              <option value="10">10 or less</option>
+              <option value="15">15 or less</option>
+            </select>
+          </div>
+          <button class="btn" id="apply-filters-btn" style="background-color: #3F51B5;">
+            <i class="fas fa-check"></i> Apply Filters
+          </button>
+        </div>
+      </div>
+      
       <div class="modal-body" id="recipe-content">
         <!-- Recipe content will be inserted here -->
       </div>
+      
       <div class="modal-footer">
-        <div class="recipe-provider-selector">
-          <label for="recipe-provider">Recipe Source:</label>
-          <select id="recipe-provider">
-            <option value="local">Local Database</option>
-            <option value="spoonacular">Spoonacular</option>
-            <option value="kRuoka">K-Ruoka</option>
-            <option value="valio">Valio</option>
-            <option value="pirkka">Pirkka</option>
-            <option value="edamam">Edamam</option>
-          </select>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <button class="btn" id="toggle-filters-btn" style="background-color: #9E9E9E;">
+            <i class="fas fa-filter"></i> Filter Options
+          </button>
+          
+          <div class="recipe-provider-selector">
+            <label for="recipe-provider">Recipe Source:</label>
+            <select id="recipe-provider">
+              <option value="local">Local Database</option>
+              <option value="spoonacular">Spoonacular</option>
+              <option value="kRuoka">K-Ruoka</option>
+              <option value="valio">Valio</option>
+              <option value="pirkka">Pirkka</option>
+              <option value="edamam">Edamam</option>
+            </select>
+          </div>
+          <button class="btn" id="recipe-api-key-button">Set API Key</button>
         </div>
-        <button class="btn" id="recipe-api-key-button">Set API Key</button>
       </div>
     </div>
   </div>
@@ -2085,6 +2175,29 @@
     const customApiSection = document.getElementById('custom-api-section');
     const premiumUpgradeBtn = document.getElementById('premium-upgrade-btn');
     
+    // Recipe filter elements
+    const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
+    const recipeFilters = document.getElementById('recipe-filters');
+    const applyFiltersBtn = document.getElementById('apply-filters-btn');
+    const filterVegetarian = document.getElementById('filter-vegetarian');
+    const filterVegan = document.getElementById('filter-vegan');
+    const filterGlutenFree = document.getElementById('filter-gluten-free');
+    const filterDairyFree = document.getElementById('filter-dairy-free');
+    const filterLowSugar = document.getElementById('filter-low-sugar');
+    const filterNutFree = document.getElementById('filter-nut-free');
+    const maxIngredientsSelect = document.getElementById('max-ingredients');
+    
+    // Current filter settings
+    const recipeFiltersState = {
+      vegetarian: false,
+      vegan: false,
+      glutenFree: false,
+      dairyFree: false,
+      lowSugar: false,
+      nutFree: false,
+      maxIngredients: 0
+    };
+    
     // Make you admin by default
     localStorage.setItem('isPremiumUser', 'true');
     
@@ -2438,8 +2551,32 @@
           providerDisplay = recipe.provider.charAt(0).toUpperCase() + recipe.provider.slice(1);
         }
         
-        const placeholderImage = 'https://via.placeholder.com/600x400?text=No+Image';
-        const imageUrl = recipe.imageUrl || placeholderImage;
+        // Determine food type and icon for recipes without images
+        let foodType = 'meal';
+        let foodIcon = 'fas fa-utensils';
+        
+        // Check recipe title to determine food type
+        const lowerTitle = recipe.title.toLowerCase();
+        if (lowerTitle.includes('soup') || lowerTitle.includes('keitto')) {
+          foodType = 'soup';
+          foodIcon = 'fas fa-coffee'; // Soup icon
+        } else if (lowerTitle.includes('salad') || lowerTitle.includes('salaatti')) {
+          foodType = 'salad';
+          foodIcon = 'fas fa-leaf'; // Salad icon
+        } else if (lowerTitle.includes('dessert') || lowerTitle.includes('cake') || 
+                  lowerTitle.includes('cookie') || lowerTitle.includes('kakku') || 
+                  lowerTitle.includes('jälkiruoka') || lowerTitle.includes('leipä')) {
+          foodType = 'dessert';
+          foodIcon = 'fas fa-birthday-cake'; // Dessert icon
+        } else if (lowerTitle.includes('drink') || lowerTitle.includes('chocolate') || 
+                  lowerTitle.includes('milk') || lowerTitle.includes('maito') || 
+                  lowerTitle.includes('juice') || lowerTitle.includes('mehu')) {
+          foodType = 'drink';
+          foodIcon = 'fas fa-glass-martini'; // Drink icon
+        } else if (lowerTitle.includes('breakfast') || lowerTitle.includes('aamiainen')) {
+          foodType = 'breakfast';
+          foodIcon = 'fas fa-egg'; // Breakfast icon
+        }
         
         const html = `
           <div class="recipe-detail-view">
@@ -2456,7 +2593,10 @@
               </div>
             </div>
             
-            <img src="${imageUrl}" alt="${recipe.title}" class="recipe-detail-image">
+            ${recipe.imageUrl 
+              ? `<img src="${recipe.imageUrl}" alt="${recipe.title}" class="recipe-detail-image">`
+              : `<div class="recipe-icon-placeholder" style="height: 250px; margin-bottom: 20px;"><i class="${foodIcon}" style="font-size: 64px;"></i></div>`
+            }
             
             <div class="recipe-detail-meta">
               ${recipe.prepTime ? `
