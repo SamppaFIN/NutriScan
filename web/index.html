@@ -1480,7 +1480,29 @@
     // Helper functions
     function resetActiveSections() {
       inputContainers.forEach(container => {
-        container.classList.remove('active');
+        container.style.display = 'none';
+      });
+    }
+    
+    // Function to activate a specific tab
+    function activateTab(tabId) {
+      // Hide all containers
+      inputContainers.forEach(container => {
+        container.style.display = 'none';
+      });
+      
+      // Show selected container
+      const selectedContainer = document.getElementById(tabId + '-container');
+      if (selectedContainer) {
+        selectedContainer.style.display = 'block';
+      }
+      
+      // Update button states
+      optionButtons.forEach(button => {
+        button.classList.remove('active');
+        if (button.getAttribute('data-target') === tabId) {
+          button.classList.add('active');
+        }
       });
     }
     
