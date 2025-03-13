@@ -971,6 +971,12 @@
           <p>Provide information about your product manually</p>
           
           <div class="input-group">
+            <label for="product-barcode">Barcode (Optional)</label>
+            <input type="text" id="product-barcode" placeholder="e.g., 6410405103420">
+            <small>If scanned previously, this will be filled automatically</small>
+          </div>
+          
+          <div class="input-group">
             <label for="product-name">Product Name</label>
             <input type="text" id="product-name" placeholder="e.g., Valio Skyr Strawberry Yogurt">
           </div>
@@ -1620,16 +1626,55 @@
         });
         barcodeVideo.srcObject = stream;
         
-        // In a real app, we would use a barcode detection library here
-        // For this demo, we'll just simulate finding a barcode after a few seconds
-        setTimeout(() => {
+        // In a real app, we would use a proper barcode detection library
+        // For this demo, we'll allow the user to confirm when they want to capture the current frame
+        // or ask them to enter a barcode manually if not detected
+        
+        // Add a button for the user to capture or enter manually
+        const captureArea = document.createElement('div');
+        captureArea.style.textAlign = 'center';
+        captureArea.style.margin = '10px 0';
+        captureArea.innerHTML = `
+          <button id="capture-frame-btn" class="btn primary-btn" style="margin-right: 10px">
+            <i class="fas fa-camera"></i> Capture
+          </button>
+          <button id="manual-entry-btn" class="btn secondary-btn">
+            <i class="fas fa-keyboard"></i> Enter Manually
+          </button>
+        `;
+        
+        barcodeScanner.appendChild(captureArea);
+        
+        // Capture button handler
+        document.getElementById('capture-frame-btn').addEventListener('click', () => {
+          // In a real app, this would use a barcode detection library to analyze the current frame
+          // For this demo, prompt the user to enter the barcode they see
+          const detectedBarcode = prompt('Enter the barcode you see in the image:', '');
+          
+          if (detectedBarcode && detectedBarcode.trim() !== '') {
+            if (stream) {
+              stream.getTracks().forEach(track => track.stop());
+            }
+            barcodeScanner.removeChild(captureArea);
+            barcodeScanner.style.display = 'none';
+            barcodeInput.value = detectedBarcode.trim();
+            
+            // No alert to avoid interrupting the flow
+            analyzeProduct('barcode');
+          }
+        });
+        
+        // Manual entry button handler
+        document.getElementById('manual-entry-btn').addEventListener('click', () => {
           if (stream) {
             stream.getTracks().forEach(track => track.stop());
           }
+          barcodeScanner.removeChild(captureArea);
           barcodeScanner.style.display = 'none';
-          barcodeInput.value = '6410405103420'; // Simulated barcode (Valio milk)
-          alert('Barcode detected: 6410405103420');
-        }, 3000);
+          
+          // Show manual entry tab
+          activateTab('manual-entry');
+        });
         
       } catch (err) {
         console.error('Error accessing camera:', err);
@@ -1697,27 +1742,61 @@
               console.log('Product found in local database:', localProduct);
               product = localProduct;
             } else {
-              console.log('Product not found in local database, using fallback');
-              // Fallback for demonstration
-              product = {
-                barcode: barcode,
-                name: 'Valio Laktoositon Rasvaton Maito',
-                brand: 'Valio',
-                origin: 'Finland',
-                ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
-                nutritionalValues: {
-                  calories: '33 kcal/100ml',
-                  protein: '3.3g/100ml',
-                  carbohydrates: '4.9g/100ml',
-                  fat: '0g/100ml'
-                }
-              };
+              console.log('Product not found in local database, offering manual entry');
               
-              // Save to local database for future use
-              if (window.localProductDB) {
-                window.localProductDB.addProduct(product);
-                console.log('Product added to local database');
-              }
+              // Show product not found message and offer manual entry
+              loading.style.display = 'none';
+              resultContainer.style.display = 'none';
+              
+              // Create a product not found message with manual entry option
+              const notFoundContainer = document.createElement('div');
+              notFoundContainer.className = 'not-found-container';
+              notFoundContainer.style.textAlign = 'center';
+              notFoundContainer.style.padding = '20px';
+              notFoundContainer.style.marginTop = '20px';
+              notFoundContainer.innerHTML = `
+                <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #F44336;"></i>
+                <h3>Product Not Found</h3>
+                <p>We couldn't find a product with barcode: ${barcode}</p>
+                <p>Would you like to enter the product details manually?</p>
+                <div style="margin-top: 20px;">
+                  <button id="manual-entry-redirect" class="btn primary-btn">
+                    <i class="fas fa-pencil-alt"></i> Enter Details Manually
+                  </button>
+                  <button id="scan-again-btn" class="btn secondary-btn" style="margin-left: 10px;">
+                    <i class="fas fa-barcode"></i> Scan Again
+                  </button>
+                </div>
+              `;
+              
+              mainContent.appendChild(notFoundContainer);
+              
+              // Add event listener for manual entry button
+              document.getElementById('manual-entry-redirect').addEventListener('click', () => {
+                // Pre-fill barcode field if available
+                const barcodeField = document.getElementById('product-barcode');
+                if (barcodeField) {
+                  barcodeField.value = barcode;
+                }
+                
+                // Remove not found message
+                mainContent.removeChild(notFoundContainer);
+                
+                // Show manual entry tab
+                activateTab('manual-entry');
+              });
+              
+              // Add event listener for scan again button
+              document.getElementById('scan-again-btn').addEventListener('click', () => {
+                // Remove not found message
+                mainContent.removeChild(notFoundContainer);
+                
+                // Show barcode scanning again
+                scanBarcodeBtn.click();
+              });
+              
+              // Exit early since we're showing custom UI
+              return;
             }
           } else {
             // Fallback if local database not available
