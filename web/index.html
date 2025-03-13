@@ -1347,6 +1347,100 @@
     
     // Make adapter available globally
     window.recipeAdapter = recipeAdapter;
+    
+    // Function to check for allergens in an ingredient
+    window.checkIngredientForAllergens = function(ingredient) {
+      if (!ingredient || !window.allergenDatabase) return [];
+      
+      const lowerIngredient = ingredient.toLowerCase();
+      const allergens = [];
+      
+      // Check for common allergens
+      const commonAllergens = Object.keys(window.allergenDatabase);
+      
+      for (const allergen of commonAllergens) {
+        // Check if ingredient is or contains the allergen
+        if (lowerIngredient === allergen.toLowerCase() || 
+            lowerIngredient.includes(allergen.toLowerCase())) {
+          allergens.push(allergen);
+          continue;
+        }
+        
+        // Check allergen aliases/variants
+        const variants = window.allergenDatabase[allergen].variants || [];
+        for (const variant of variants) {
+          if (lowerIngredient.includes(variant.toLowerCase())) {
+            allergens.push(allergen);
+            break;
+          }
+        }
+      }
+      
+      return allergens;
+    }
+    
+    // Function to find alternatives for ingredients
+    window.findIngredientAlternatives = function(ingredient) {
+      if (!ingredient) return [];
+      
+      const lowerIngredient = ingredient.toLowerCase();
+      
+      // Common ingredient alternatives
+      const alternatives = {
+        // Dairy alternatives
+        'milk': ['almond milk', 'soy milk', 'oat milk', 'coconut milk', 'cashew milk'],
+        'butter': ['margarine', 'coconut oil', 'olive oil', 'avocado'],
+        'cream': ['coconut cream', 'cashew cream', 'silken tofu'],
+        'cheese': ['nutritional yeast', 'vegan cheese', 'tofu'],
+        'yogurt': ['coconut yogurt', 'soy yogurt', 'almond yogurt'],
+        
+        // Egg alternatives
+        'egg': ['flax egg (1 tbsp ground flax + 3 tbsp water)', 'chia egg', 'applesauce', 'mashed banana', 'silken tofu'],
+        
+        // Flour alternatives
+        'wheat flour': ['almond flour', 'coconut flour', 'rice flour', 'oat flour', 'gluten-free flour blend'],
+        'flour': ['almond flour', 'coconut flour', 'rice flour', 'oat flour', 'gluten-free flour blend'],
+        
+        // Sugar alternatives
+        'sugar': ['honey', 'maple syrup', 'stevia', 'coconut sugar', 'agave nectar'],
+        
+        // Nut alternatives
+        'peanuts': ['sunflower seeds', 'pumpkin seeds', 'roasted chickpeas'],
+        'almonds': ['sunflower seeds', 'pumpkin seeds', 'hemp seeds'],
+        'peanut butter': ['sunflower seed butter', 'pumpkin seed butter', 'tahini'],
+        
+        // Meat alternatives
+        'beef': ['portobello mushrooms', 'lentils', 'tofu', 'tempeh', 'seitan', 'plant-based beef substitute'],
+        'chicken': ['tofu', 'chickpeas', 'jackfruit', 'seitan', 'plant-based chicken substitute'],
+        'pork': ['jackfruit', 'tofu', 'tempeh', 'seitan', 'plant-based pork substitute'],
+        'fish': ['tofu', 'tempeh', 'hearts of palm', 'plant-based fish substitute'],
+        
+        // Finnish language alternatives
+        'maito': ['mantelimaito', 'soijamaito', 'kaurajuoma', 'kookosmaito'],
+        'voi': ['margariini', 'kookosöljy', 'oliiviöljy', 'avokado'],
+        'kerma': ['kookoskerma', 'cashewkerma', 'silken tofu'],
+        'juusto': ['ravintohiiva', 'vegaaninen juusto', 'tofu'],
+        'jogurtti': ['kookosjogurtti', 'soijajogurtti', 'manteijogurtti'],
+        'muna': ['pellavasiemen + vesi', 'chiasiemen + vesi', 'omenasose', 'banaani', 'silken tofu'],
+        'vehnäjauho': ['mantelijauho', 'kookosjauho', 'riisijauho', 'kaurajauho', 'gluteeniton jauhoseos'],
+        'jauho': ['mantelijauho', 'kookosjauho', 'riisijauho', 'kaurajauho', 'gluteeniton jauhoseos'],
+        'sokeri': ['hunaja', 'vaahterasiirappi', 'stevia', 'kookossokeri', 'agavesiirappi'],
+        'liha': ['portobello sienet', 'linssit', 'tofu', 'tempeh', 'seitan', 'kasvipohjaiset lihankorvikkeet'],
+        'kana': ['tofu', 'kikherneet', 'jackfruit', 'seitan', 'kasvipohjaiset kanankorvikkeet'],
+        'possu': ['jackfruit', 'tofu', 'tempeh', 'seitan', 'kasvipohjaiset lihan korvikkeet'],
+        'kala': ['tofu', 'tempeh', 'palmunydinsydän', 'kasvipohjaiset kalan korvikkeet']
+      };
+      
+      // Check if ingredient matches any of our known alternatives
+      for (const [key, alts] of Object.entries(alternatives)) {
+        if (lowerIngredient.includes(key.toLowerCase())) {
+          return alts;
+        }
+      }
+      
+      // Generic alternatives for unknown ingredients
+      return ['Sorry, no specific alternatives found for this ingredient.'];
+    };
   </script>
 
   <script>
@@ -2209,6 +2303,11 @@
         premiumUpgradeBtn.innerHTML = '<i class="fas fa-crown"></i> Premium Active';
         premiumUpgradeBtn.style.backgroundColor = '#4CAF50';
       }
+      
+      // Initialize recipe provider dropdown based on available providers
+      if (window.recipeAdapter) {
+        updateRecipeProviderDropdown();
+      }
     } catch (e) {
       console.error('Failed to load premium status:', e);
     }
@@ -2240,6 +2339,16 @@
       // Add change listener
       toggle.addEventListener('change', () => {
         updateToggleStatus(toggle);
+        
+        // Check if this is a recipe source toggle
+        const id = toggle.id;
+        if (id && (id.startsWith('enable-k-ruoka') || 
+                  id.startsWith('enable-pirkka') || 
+                  id.startsWith('enable-valio') || 
+                  id.startsWith('enable-edamam'))) {
+          // Update recipe provider dropdown if source was toggled
+          updateRecipeProviderDropdown();
+        }
       });
     });
     
@@ -2670,11 +2779,139 @@
             </div>
             
             <h3>Ingredients</h3>
-            <div class="recipe-ingredients-list">
-              <ul>
-                ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
-              </ul>
+            <div class="recipe-ingredients-section">
+              <div class="recipe-ingredients-list">
+                <ul>
+                  ${recipe.ingredients.map(ingredient => {
+                    // Check for common allergens
+                    const allergens = checkIngredientForAllergens(ingredient);
+                    const allergenWarning = allergens.length > 0 
+                      ? `<span class="allergen-warning" title="Contains: ${allergens.join(', ')}">
+                          <i class="fas fa-exclamation-triangle"></i>
+                         </span>` 
+                      : '';
+                    
+                    // Create a safe ID from ingredient name
+                    const ingredientId = ingredient.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+                    
+                    return `<li>
+                      <div class="ingredient-item">
+                        <span class="ingredient-name">${ingredient}</span>
+                        ${allergenWarning}
+                        <div class="ingredient-actions">
+                          <button class="btn-small btn-info ingredient-info-btn" data-ingredient="${ingredient}">
+                            <i class="fas fa-info-circle"></i>
+                          </button>
+                          <button class="btn-small btn-alt ingredient-alt-btn" data-ingredient="${ingredient}">
+                            <i class="fas fa-exchange-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="ingredient-details" id="details-${ingredientId}" style="display: none;"></div>
+                    </li>`;
+                  }).join('')}
+                </ul>
+              </div>
+              
+              <div class="add-ingredient-section">
+                <h4>Add more ingredients</h4>
+                <div class="add-ingredient-form">
+                  <input type="text" id="new-recipe-ingredient" class="ingredient-input" placeholder="Enter ingredient name...">
+                  <button class="btn" id="add-recipe-ingredient-btn">
+                    <i class="fas fa-plus"></i> Add
+                  </button>
+                </div>
+                <div id="ingredient-search-results" class="ingredient-search-results" style="display: none;">
+                  <!-- Search results will be displayed here -->
+                </div>
+              </div>
             </div>
+            
+            <style>
+              .recipe-ingredients-section {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+              }
+              .recipe-ingredients-list {
+                flex: 2;
+                min-width: 300px;
+              }
+              .add-ingredient-section {
+                flex: 1;
+                min-width: 250px;
+                background-color: #f5f5f5;
+                padding: 15px;
+                border-radius: 8px;
+              }
+              .ingredient-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 5px;
+              }
+              .ingredient-name {
+                flex: 1;
+              }
+              .allergen-warning {
+                color: #ff5722;
+                cursor: help;
+              }
+              .ingredient-actions {
+                display: flex;
+                gap: 5px;
+              }
+              .btn-small {
+                padding: 2px 5px;
+                font-size: 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                border: none;
+              }
+              .btn-info {
+                background-color: #2196F3;
+                color: white;
+              }
+              .btn-alt {
+                background-color: #4CAF50;
+                color: white;
+              }
+              .ingredient-details {
+                margin-left: 20px;
+                margin-top: 5px;
+                padding: 10px;
+                background-color: #f9f9f9;
+                border-left: 3px solid #2196F3;
+                font-size: 14px;
+              }
+              .add-ingredient-form {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 10px;
+              }
+              .ingredient-input {
+                flex: 1;
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+              }
+              .ingredient-search-results {
+                max-height: 200px;
+                overflow-y: auto;
+                background-color: white;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin-top: 10px;
+              }
+              .ingredient-search-item {
+                padding: 8px 12px;
+                border-bottom: 1px solid #eee;
+                cursor: pointer;
+              }
+              .ingredient-search-item:hover {
+                background-color: #f0f0f0;
+              }
+            </style>
             
             ${recipe.instructions && recipe.instructions.length > 0 ? `
               <h3>Instructions</h3>
@@ -2700,6 +2937,370 @@
             renderRecipeList(window.currentRecipeList || []);
           });
         }
+        
+        // Add event listeners for ingredient info buttons
+        document.querySelectorAll('.ingredient-info-btn').forEach(button => {
+          button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const ingredient = button.getAttribute('data-ingredient');
+            const ingredientId = ingredient.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            const detailsEl = document.getElementById(`details-${ingredientId}`);
+            
+            if (detailsEl.style.display === 'none' || !detailsEl.style.display) {
+              // Check for allergens
+              const allergens = window.checkIngredientForAllergens(ingredient);
+              
+              // Check for E-codes
+              let eCodes = [];
+              try {
+                if (window.extractECodesFromText) {
+                  eCodes = window.extractECodesFromText(ingredient);
+                }
+              } catch (err) {
+                console.error('Failed to extract E-codes:', err);
+              }
+              
+              // Build info HTML
+              let infoHtml = '';
+              
+              // Allergen info
+              if (allergens.length > 0) {
+                infoHtml += `
+                  <div class="allergen-info" style="margin-bottom: 10px;">
+                    <strong>Allergen Warning:</strong>
+                    <span style="color: #F44336;">
+                      This ingredient contains or may contain ${allergens.join(', ')}.
+                    </span>
+                  </div>
+                `;
+              }
+              
+              // E-code info
+              if (eCodes.length > 0) {
+                infoHtml += `
+                  <div class="e-code-info" style="margin-bottom: 10px;">
+                    <strong>Food Additives:</strong>
+                    <ul style="margin-top: 5px; padding-left: 20px;">
+                      ${eCodes.map(code => `
+                        <li>
+                          <strong>${code.code}</strong>: ${code.name} 
+                          (${code.function || 'Unknown function'})
+                          ${code.origin ? `<br><small>Origin: ${code.origin}</small>` : ''}
+                          ${code.vegan === false ? '<br><small style="color: #F44336;">Not suitable for vegans</small>' : ''}
+                          ${code.vegetarian === false ? '<br><small style="color: #F44336;">Not suitable for vegetarians</small>' : ''}
+                          ${code.riskLevel > 1 ? `<br><small style="color: #FF9800;">Risk level: ${code.riskLevel}/3</small>` : ''}
+                        </li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                `;
+              }
+              
+              // General info if no specific details found
+              if (allergens.length === 0 && eCodes.length === 0) {
+                infoHtml = `
+                  <div style="color: #757575;">
+                    No specific allergen or additive information found for this ingredient.
+                  </div>
+                `;
+              }
+              
+              // Show the info
+              detailsEl.innerHTML = infoHtml;
+              detailsEl.style.display = 'block';
+            } else {
+              // Hide details if already showing
+              detailsEl.style.display = 'none';
+            }
+          });
+        });
+        
+        // Add event listeners for ingredient alternative buttons
+        document.querySelectorAll('.ingredient-alt-btn').forEach(button => {
+          button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const ingredient = button.getAttribute('data-ingredient');
+            const ingredientId = ingredient.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            const detailsEl = document.getElementById(`details-${ingredientId}`);
+            
+            if (detailsEl.style.display === 'none' || !detailsEl.style.display) {
+              // Get alternatives
+              const alternatives = window.findIngredientAlternatives(ingredient);
+              
+              // Build alternatives HTML
+              let altsHtml = `
+                <div class="ingredient-alternatives">
+                  <strong>Alternatives for ${ingredient}:</strong>
+                  <ul style="margin-top: 5px; padding-left: 20px;">
+              `;
+              
+              if (alternatives.length > 0 && !alternatives[0].startsWith('Sorry')) {
+                alternatives.forEach(alt => {
+                  altsHtml += `<li>${alt}</li>`;
+                });
+              } else {
+                altsHtml += `<li style="color: #757575;">${alternatives[0]}</li>`;
+              }
+              
+              altsHtml += `
+                  </ul>
+                </div>
+              `;
+              
+              // Show the alternatives
+              detailsEl.innerHTML = altsHtml;
+              detailsEl.style.display = 'block';
+            } else {
+              // Hide details if already showing
+              detailsEl.style.display = 'none';
+            }
+          });
+        });
+        
+        // Add event listener for the add ingredient button
+        const addIngredientBtn = document.getElementById('add-recipe-ingredient-btn');
+        const ingredientInput = document.getElementById('new-recipe-ingredient');
+        const ingredientSearchResults = document.getElementById('ingredient-search-results');
+        
+        if (addIngredientBtn && ingredientInput) {
+          addIngredientBtn.addEventListener('click', () => {
+            const newIngredient = ingredientInput.value.trim();
+            
+            if (newIngredient) {
+              // Add to the recipe ingredients
+              if (!recipe.ingredients) {
+                recipe.ingredients = [];
+              }
+              
+              // Check if already in list
+              if (!recipe.ingredients.includes(newIngredient)) {
+                recipe.ingredients.push(newIngredient);
+                
+                // Update the UI - this is a simplified approach; a more robust solution would be to rerender
+                const ul = document.querySelector('.recipe-ingredients-list ul');
+                
+                if (ul) {
+                  const li = document.createElement('li');
+                  const ingredientId = newIngredient.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+                  
+                  // Check for allergens
+                  const allergens = window.checkIngredientForAllergens(newIngredient);
+                  const allergenWarning = allergens.length > 0 
+                    ? `<span class="allergen-warning" title="Contains: ${allergens.join(', ')}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                       </span>` 
+                    : '';
+                  
+                  li.innerHTML = `
+                    <div class="ingredient-item">
+                      <span class="ingredient-name">${newIngredient}</span>
+                      ${allergenWarning}
+                      <div class="ingredient-actions">
+                        <button class="btn-small btn-info ingredient-info-btn" data-ingredient="${newIngredient}">
+                          <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button class="btn-small btn-alt ingredient-alt-btn" data-ingredient="${newIngredient}">
+                          <i class="fas fa-exchange-alt"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="ingredient-details" id="details-${ingredientId}" style="display: none;"></div>
+                  `;
+                  
+                  ul.appendChild(li);
+                  
+                  // Add event listeners to the new buttons
+                  const infoBtn = li.querySelector('.ingredient-info-btn');
+                  const altBtn = li.querySelector('.ingredient-alt-btn');
+                  
+                  infoBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const detailsEl = document.getElementById(`details-${ingredientId}`);
+                    
+                    if (detailsEl.style.display === 'none' || !detailsEl.style.display) {
+                      // Check for allergens
+                      const allergens = window.checkIngredientForAllergens(newIngredient);
+                      
+                      // Check for E-codes
+                      let eCodes = [];
+                      try {
+                        if (window.extractECodesFromText) {
+                          eCodes = window.extractECodesFromText(newIngredient);
+                        }
+                      } catch (err) {
+                        console.error('Failed to extract E-codes:', err);
+                      }
+                      
+                      // Build info HTML
+                      let infoHtml = '';
+                      
+                      // Allergen info
+                      if (allergens.length > 0) {
+                        infoHtml += `
+                          <div class="allergen-info" style="margin-bottom: 10px;">
+                            <strong>Allergen Warning:</strong>
+                            <span style="color: #F44336;">
+                              This ingredient contains or may contain ${allergens.join(', ')}.
+                            </span>
+                          </div>
+                        `;
+                      }
+                      
+                      // E-code info
+                      if (eCodes.length > 0) {
+                        infoHtml += `
+                          <div class="e-code-info" style="margin-bottom: 10px;">
+                            <strong>Food Additives:</strong>
+                            <ul style="margin-top: 5px; padding-left: 20px;">
+                              ${eCodes.map(code => `
+                                <li>
+                                  <strong>${code.code}</strong>: ${code.name} 
+                                  (${code.function || 'Unknown function'})
+                                  ${code.origin ? `<br><small>Origin: ${code.origin}</small>` : ''}
+                                  ${code.vegan === false ? '<br><small style="color: #F44336;">Not suitable for vegans</small>' : ''}
+                                  ${code.vegetarian === false ? '<br><small style="color: #F44336;">Not suitable for vegetarians</small>' : ''}
+                                  ${code.riskLevel > 1 ? `<br><small style="color: #FF9800;">Risk level: ${code.riskLevel}/3</small>` : ''}
+                                </li>
+                              `).join('')}
+                            </ul>
+                          </div>
+                        `;
+                      }
+                      
+                      // General info if no specific details found
+                      if (allergens.length === 0 && eCodes.length === 0) {
+                        infoHtml = `
+                          <div style="color: #757575;">
+                            No specific allergen or additive information found for this ingredient.
+                          </div>
+                        `;
+                      }
+                      
+                      // Show the info
+                      detailsEl.innerHTML = infoHtml;
+                      detailsEl.style.display = 'block';
+                    } else {
+                      // Hide details if already showing
+                      detailsEl.style.display = 'none';
+                    }
+                  });
+                  
+                  altBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const detailsEl = document.getElementById(`details-${ingredientId}`);
+                    
+                    if (detailsEl.style.display === 'none' || !detailsEl.style.display) {
+                      // Get alternatives
+                      const alternatives = window.findIngredientAlternatives(newIngredient);
+                      
+                      // Build alternatives HTML
+                      let altsHtml = `
+                        <div class="ingredient-alternatives">
+                          <strong>Alternatives for ${newIngredient}:</strong>
+                          <ul style="margin-top: 5px; padding-left: 20px;">
+                      `;
+                      
+                      if (alternatives.length > 0 && !alternatives[0].startsWith('Sorry')) {
+                        alternatives.forEach(alt => {
+                          altsHtml += `<li>${alt}</li>`;
+                        });
+                      } else {
+                        altsHtml += `<li style="color: #757575;">${alternatives[0]}</li>`;
+                      }
+                      
+                      altsHtml += `
+                          </ul>
+                        </div>
+                      `;
+                      
+                      // Show the alternatives
+                      detailsEl.innerHTML = altsHtml;
+                      detailsEl.style.display = 'block';
+                    } else {
+                      // Hide details if already showing
+                      detailsEl.style.display = 'none';
+                    }
+                  });
+                }
+              }
+              
+              // Clear input
+              ingredientInput.value = '';
+            }
+          });
+          
+          // Handle search functionality for ingredients
+          ingredientInput.addEventListener('input', () => {
+            const query = ingredientInput.value.trim();
+            
+            if (query.length >= 2) {
+              // Simulate ingredient search
+              const commonIngredients = [
+                'Salt', 'Sugar', 'Flour', 'Milk', 'Eggs', 'Butter', 'Olive oil',
+                'Garlic', 'Onion', 'Tomato', 'Pepper', 'Chicken', 'Beef', 'Pork',
+                'Rice', 'Pasta', 'Potatoes', 'Carrots', 'Cheese', 'Yogurt',
+                'Suola', 'Sokeri', 'Jauho', 'Maito', 'Munat', 'Voi', 'Oliiviöljy',
+                'Valkosipuli', 'Sipuli', 'Tomaatti', 'Pippuri', 'Kana', 'Nauta', 'Possu',
+                'Riisi', 'Pasta', 'Perunat', 'Porkkana', 'Juusto', 'Jogurtti'
+              ];
+              
+              const filtered = commonIngredients.filter(
+                ing => ing.toLowerCase().includes(query.toLowerCase())
+              );
+              
+              if (filtered.length > 0) {
+                ingredientSearchResults.innerHTML = filtered.map(
+                  ing => `<div class="ingredient-search-item">${ing}</div>`
+                ).join('');
+                
+                ingredientSearchResults.style.display = 'block';
+                
+                // Add click handlers to search results
+                document.querySelectorAll('.ingredient-search-item').forEach(item => {
+                  item.addEventListener('click', () => {
+                    ingredientInput.value = item.textContent;
+                    ingredientSearchResults.style.display = 'none';
+                  });
+                });
+              } else {
+                ingredientSearchResults.style.display = 'none';
+              }
+            } else {
+              ingredientSearchResults.style.display = 'none';
+            }
+          });
+          
+          // Hide search results when clicking elsewhere
+          document.addEventListener('click', (e) => {
+            if (!e.target.closest('.add-ingredient-section')) {
+              ingredientSearchResults.style.display = 'none';
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error loading recipe details:', error);
+        
+        recipeContent.innerHTML = `
+          <div style="text-align: center; padding: 30px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #F44336; margin-bottom: 15px;"></i>
+            <h3>Error Loading Recipe</h3>
+            <p>${error.message}</p>
+            <div style="margin-top: 20px;">
+              <button class="btn error-back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Recipes
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // Add event listener to the back button in error state
+        const errorBackButton = recipeContent.querySelector('.error-back-btn');
+        if (errorBackButton) {
+          errorBackButton.addEventListener('click', () => {
+            renderRecipeList(window.currentRecipeList || []);
+          });
+        }
+      }
         
       } catch (error) {
         console.error('Error loading recipe details:', error);
