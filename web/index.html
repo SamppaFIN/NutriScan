@@ -2185,8 +2185,35 @@
     
     // Render a recipe card
     function renderRecipeCard(recipe) {
-      const placeholderImage = 'https://via.placeholder.com/300x200?text=No+Image';
-      const imageUrl = recipe.imageUrl || placeholderImage;
+      // Determine food type and icon
+      let foodType = 'meal';
+      let foodIcon = 'fas fa-utensils';
+      
+      // Check recipe title to determine food type
+      const lowerTitle = recipe.title.toLowerCase();
+      if (lowerTitle.includes('soup') || lowerTitle.includes('keitto')) {
+        foodType = 'soup';
+        foodIcon = 'fas fa-coffee'; // Soup icon
+      } else if (lowerTitle.includes('salad') || lowerTitle.includes('salaatti')) {
+        foodType = 'salad';
+        foodIcon = 'fas fa-leaf'; // Salad icon
+      } else if (lowerTitle.includes('dessert') || lowerTitle.includes('cake') || 
+                lowerTitle.includes('cookie') || lowerTitle.includes('kakku') || 
+                lowerTitle.includes('jälkiruoka') || lowerTitle.includes('leipä')) {
+        foodType = 'dessert';
+        foodIcon = 'fas fa-birthday-cake'; // Dessert icon
+      } else if (lowerTitle.includes('drink') || lowerTitle.includes('chocolate') || 
+                lowerTitle.includes('milk') || lowerTitle.includes('maito') || 
+                lowerTitle.includes('juice') || lowerTitle.includes('mehu')) {
+        foodType = 'drink';
+        foodIcon = 'fas fa-glass-martini'; // Drink icon
+      } else if (lowerTitle.includes('breakfast') || lowerTitle.includes('aamiainen')) {
+        foodType = 'breakfast';
+        foodIcon = 'fas fa-egg'; // Breakfast icon
+      }
+      
+      // Create placeholder image with appropriate icon
+      const placeholderImage = recipe.imageUrl || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23f5f5f5'/%3E%3Ctext x='150' y='100' font-family='Arial' font-size='30' text-anchor='middle' dominant-baseline='middle' fill='%23757575'%3E${foodType}%3C/text%3E%3C/svg%3E`;
       
       // Format provider name for display
       let providerDisplay = recipe.provider;
@@ -2204,9 +2231,14 @@
         ? recipe.ingredients.slice(0, 3).join(', ') + (recipe.ingredients.length > 3 ? '...' : '')
         : 'Ingredients not available';
       
+      // Determine if we should show the recipe image or an icon placeholder
+      const imageHtml = recipe.imageUrl 
+        ? `<img src="${recipe.imageUrl}" alt="${recipe.title}" class="recipe-image">`
+        : `<div class="recipe-icon-placeholder"><i class="${foodIcon}"></i></div>`;
+      
       return `
         <div class="recipe-card" data-id="${recipe.id}" data-provider="${recipe.provider}">
-          <img src="${imageUrl}" alt="${recipe.title}" class="recipe-image">
+          ${imageHtml}
           <div class="recipe-details">
             <span class="recipe-provider-badge">${providerDisplay}</span>
             <h3 class="recipe-title">${recipe.title}</h3>
@@ -2222,6 +2254,9 @@
     
     // Show details for a specific recipe
     async function showRecipeDetails(recipeId, provider) {
+      // Store current recipe list for back button functionality
+      window.currentRecipeList = window.lastRecipeList;
+      
       // Show loading state
       recipeContent.innerHTML = `
         <div style="text-align: center; padding: 30px;">
@@ -2307,6 +2342,14 @@
         
         recipeContent.innerHTML = html;
         
+        // Add event listener to the back button
+        const backButton = recipeContent.querySelector('.btn');
+        if (backButton) {
+          backButton.addEventListener('click', () => {
+            renderRecipeList(window.currentRecipeList || []);
+          });
+        }
+        
       } catch (error) {
         console.error('Error loading recipe details:', error);
         
@@ -2316,12 +2359,20 @@
             <h3>Error Loading Recipe</h3>
             <p>${error.message}</p>
             <div style="margin-top: 20px;">
-              <button class="btn" onclick="renderRecipeList(${JSON.stringify(window.lastRecipeList)})">
+              <button class="btn error-back-btn">
                 <i class="fas fa-arrow-left"></i> Back to Recipes
               </button>
             </div>
           </div>
         `;
+        
+        // Add event listener to the back button in error state
+        const errorBackButton = recipeContent.querySelector('.error-back-btn');
+        if (errorBackButton) {
+          errorBackButton.addEventListener('click', () => {
+            renderRecipeList(window.currentRecipeList || []);
+          });
+        }
       }
     }
   </script>
