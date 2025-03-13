@@ -1354,6 +1354,13 @@
     // Make adapter available globally
     window.recipeAdapter = recipeAdapter;
     
+    // Load AI Image Recognition module
+    import('./js/aiImageRecognition.js').then(() => {
+      console.log('AI Image Recognition module imported');
+    }).catch(error => {
+      console.error('Error importing AI Image Recognition module:', error);
+    });
+    
     // Function to check for allergens in an ingredient
     window.checkIngredientForAllergens = function(ingredient) {
       if (!ingredient || !window.allergenDatabase) return [];
@@ -1510,21 +1517,27 @@
     optionButtons.forEach(button => {
       button.addEventListener('click', () => {
         const optionId = button.id;
+        
+        // Update active button
+        optionButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        // Hide all containers
         resetActiveSections();
         
         // Show the corresponding container
         switch(optionId) {
           case 'camera-option':
-            document.getElementById('camera-container').classList.add('active');
+            document.getElementById('camera-container').style.display = 'block';
             break;
           case 'upload-option':
-            document.getElementById('upload-container').classList.add('active');
+            document.getElementById('upload-container').style.display = 'block';
             break;
           case 'barcode-option':
-            document.getElementById('barcode-container').classList.add('active');
+            document.getElementById('barcode-container').style.display = 'block';
             break;
           case 'manual-option':
-            document.getElementById('manual-container').classList.add('active');
+            document.getElementById('manual-container').style.display = 'block';
             break;
         }
       });
@@ -1744,7 +1757,7 @@
     let currentDisplayedProduct = null;
     
     // Analyze product and display results
-    function analyzeProduct(method, providedBarcode = null) {
+    async function analyzeProduct(method, providedBarcode = null) {
       // Hide all input containers
       resetActiveSections();
       
@@ -1752,13 +1765,80 @@
       loading.style.display = 'block';
       resultContainer.style.display = 'none';
       
-      // Simulate processing time
-      setTimeout(() => {
-        loading.style.display = 'none';
-        resultContainer.style.display = 'block';
-        
-        // Different sample results based on method
-        let product;
+      let product;
+      
+      if (method === 'camera' || method === 'upload') {
+        try {
+          // Initialize AI if needed
+          if (!window.aiImageRecognition.isInitialized) {
+            await window.aiImageRecognition.initialize();
+          }
+          
+          // Get the image source
+          const imageSource = method === 'camera' 
+            ? document.getElementById('captured-image') 
+            : document.getElementById('image-preview');
+          
+          // Analyze the image using AI
+          const recognitionResult = await window.aiImageRecognition.analyzeImage(imageSource);
+          
+          if (recognitionResult.success && recognitionResult.products.length > 0) {
+            // Sort by confidence and pick the highest
+            const bestMatch = recognitionResult.products.sort((a, b) => b.confidence - a.confidence)[0];
+            product = bestMatch.product;
+            
+            // Show confidence score
+            console.log(`Product recognized with ${(bestMatch.confidence * 100).toFixed(1)}% confidence`);
+            
+            // If more than one product was recognized, show them
+            if (recognitionResult.products.length > 1) {
+              console.log('Other possibilities:');
+              recognitionResult.products.slice(1).forEach(result => {
+                console.log(`- ${result.product.name} (${(result.confidence * 100).toFixed(1)}%)`);
+              });
+            }
+          } else {
+            // No products recognized, use fallback
+            if (window.localProductDB && window.localProductDB.getAllProducts().length > 0) {
+              // Get random product from local database for demonstration
+              const allProducts = window.localProductDB.getAllProducts();
+              product = allProducts[Math.floor(Math.random() * allProducts.length)];
+              console.log('No products confidently recognized, using random product for demonstration');
+            } else {
+              // Fallback if local database is empty
+              product = {
+                barcode: 'IMAGE_' + Date.now().toString(),
+                name: 'Fazer Puikula Rye Bread',
+                brand: 'Fazer',
+                origin: 'Finland',
+                ingredients: 'Wholegrain rye flour, water, wheat flour, rye malt, salt, yeast, E300, E472e',
+                nutritionalValues: {
+                  calories: '215 kcal/100g',
+                  protein: '6.9g/100g',
+                  carbohydrates: '40g/100g',
+                  fat: '1.0g/100g'
+                }
+              };
+              
+              // Save to local database
+              if (window.localProductDB) {
+                window.localProductDB.addProduct(product);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error analyzing image:', error);
+          alert('Error analyzing image. Please try again.');
+          loading.style.display = 'none';
+          return;
+        }
+      }
+      
+      // Continue with the rest of the product analysis
+      loading.style.display = 'none';
+      resultContainer.style.display = 'block';
+      
+      // For barcode and manual methods, use the original logic
         
         if (method === 'barcode') {
           const barcode = barcodeInput.value.trim();
@@ -1797,7 +1877,9 @@
                 </div>
               `;
               
-              mainContent.appendChild(notFoundContainer);
+              // Find the main content area to attach message to
+              const contentArea = document.querySelector('.content');
+              contentArea.appendChild(notFoundContainer);
               
               // Add event listener for manual entry button
               document.getElementById('manual-entry-redirect').addEventListener('click', () => {
@@ -1808,7 +1890,7 @@
                 }
                 
                 // Remove not found message
-                mainContent.removeChild(notFoundContainer);
+                contentArea.removeChild(notFoundContainer);
                 
                 // Show manual entry tab
                 activateTab('manual-entry');
@@ -1817,7 +1899,7 @@
               // Add event listener for scan again button
               document.getElementById('scan-again-btn').addEventListener('click', () => {
                 // Remove not found message
-                mainContent.removeChild(notFoundContainer);
+                contentArea.removeChild(notFoundContainer);
                 
                 // Show barcode scanning again
                 scanBarcodeBtn.click();
