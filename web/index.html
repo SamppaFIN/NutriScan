@@ -347,6 +347,7 @@
       display: flex;
       border-bottom: 1px solid #ddd;
       margin-bottom: 15px;
+      flex-wrap: wrap;
     }
     
     .tab {
@@ -357,12 +358,13 @@
       border-bottom: none;
       border-radius: 4px 4px 0 0;
       margin-right: 5px;
+      margin-bottom: 5px;
     }
     
     .tab.active {
       background-color: white;
       border-bottom: 1px solid white;
-      margin-bottom: -1px;
+      margin-bottom: 4px;
       font-weight: bold;
     }
     
@@ -374,6 +376,108 @@
       display: block;
     }
     
+    .ingredient-highlight {
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .e-number-link {
+      background-color: #E8EAF6;
+      color: #3949AB;
+      border-radius: 3px;
+      padding: 0 4px;
+      cursor: pointer;
+      font-weight: bold;
+      display: inline-block;
+      margin: 0 2px;
+      font-size: 0.9em;
+      transition: all 0.2s ease;
+    }
+    
+    .e-number-link:hover {
+      background-color: #3F51B5;
+      color: white;
+    }
+    
+    .allergen-link {
+      background-color: #FFEBEE;
+      color: #C62828;
+      border-radius: 3px;
+      padding: 0 4px;
+      cursor: pointer;
+      font-weight: bold;
+      display: inline-block;
+      margin: 0 2px;
+      font-size: 0.9em;
+      transition: all 0.2s ease;
+    }
+    
+    .allergen-link:hover {
+      background-color: #C62828;
+      color: white;
+    }
+    
+    .allergen-tag {
+      display: inline-block;
+      background-color: #FFEBEE;
+      color: #C62828;
+      border: 1px solid #EF9A9A;
+      border-radius: 20px;
+      padding: 4px 12px;
+      margin: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .allergen-tag:hover {
+      background-color: #C62828;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .e-code-tag {
+      display: inline-block;
+      background-color: #E8EAF6;
+      color: #3949AB;
+      border: 1px solid #9FA8DA;
+      border-radius: 20px;
+      padding: 4px 12px;
+      margin: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .e-code-tag:hover {
+      background-color: #3949AB;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .tag-section {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 10px 0;
+    }
+    
+    .tag-section-title {
+      font-weight: bold;
+      margin-right: 10px;
+      color: #424242;
+    }
+    
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    
     @media (max-width: 600px) {
       .scanner-options {
         flex-direction: column;
@@ -381,6 +485,17 @@
       
       .scanner-option {
         width: 100%;
+      }
+      
+      .tab {
+        flex: 1 0 auto;
+        text-align: center;
+        padding: 8px 10px;
+        font-size: 0.9em;
+      }
+      
+      .tab-container {
+        justify-content: space-between;
       }
     }
   </style>
@@ -568,6 +683,7 @@
   <script type="module">
     import { allergenDatabase } from './js/allergenDatabase.js';
     import { eCodeDatabase, getECodeInfo, extractECodesFromText, categorizeECodesByRisk } from './js/eCodeDatabase.js';
+    import { localProductDB } from './js/localProductDatabase.js';
     
     // Make them available globally
     window.allergenDatabase = allergenDatabase;
@@ -575,6 +691,7 @@
     window.getECodeInfo = getECodeInfo;
     window.extractECodesFromText = extractECodesFromText;
     window.categorizeECodesByRisk = categorizeECodesByRisk;
+    window.localProductDB = localProductDB;
   </script>
 
   <script>
@@ -819,18 +936,53 @@
         let product;
         
         if (method === 'barcode') {
-          product = {
-            name: 'Valio Laktoositon Rasvaton Maito',
-            brand: 'Valio',
-            origin: 'Finland',
-            ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
-            nutritionalValues: {
-              calories: '33 kcal/100ml',
-              protein: '3.3g/100ml',
-              carbohydrates: '4.9g/100ml',
-              fat: '0g/100ml'
+          const barcode = barcodeInput.value.trim();
+          
+          // Try to get product from local database
+          if (window.localProductDB) {
+            const localProduct = window.localProductDB.getProductByBarcode(barcode);
+            if (localProduct) {
+              console.log('Product found in local database:', localProduct);
+              product = localProduct;
+            } else {
+              console.log('Product not found in local database, using fallback');
+              // Fallback for demonstration
+              product = {
+                barcode: barcode,
+                name: 'Valio Laktoositon Rasvaton Maito',
+                brand: 'Valio',
+                origin: 'Finland',
+                ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
+                nutritionalValues: {
+                  calories: '33 kcal/100ml',
+                  protein: '3.3g/100ml',
+                  carbohydrates: '4.9g/100ml',
+                  fat: '0g/100ml'
+                }
+              };
+              
+              // Save to local database for future use
+              if (window.localProductDB) {
+                window.localProductDB.addProduct(product);
+                console.log('Product added to local database');
+              }
             }
-          };
+          } else {
+            // Fallback if local database not available
+            product = {
+              barcode: barcode,
+              name: 'Valio Laktoositon Rasvaton Maito',
+              brand: 'Valio',
+              origin: 'Finland',
+              ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
+              nutritionalValues: {
+                calories: '33 kcal/100ml',
+                protein: '3.3g/100ml',
+                carbohydrates: '4.9g/100ml',
+                fat: '0g/100ml'
+              }
+            };
+          }
         } else if (method === 'manual') {
           const name = document.getElementById('product-name').value;
           const brand = document.getElementById('product-brand').value;
@@ -848,20 +1000,42 @@
               fat: 'Not specified'
             }
           };
+          
+          // Save to local database with generated barcode
+          if (window.localProductDB) {
+            const generatedBarcode = 'USER_' + Date.now().toString();
+            product.barcode = generatedBarcode;
+            window.localProductDB.addProduct(product);
+            console.log('User-entered product added to local database');
+          }
         } else {
-          // Camera or upload
-          product = {
-            name: 'Fazer Puikula Rye Bread',
-            brand: 'Fazer',
-            origin: 'Finland',
-            ingredients: 'Wholegrain rye flour, water, wheat flour, rye malt, salt, yeast, E300, E472e',
-            nutritionalValues: {
-              calories: '215 kcal/100g',
-              protein: '6.9g/100g',
-              carbohydrates: '40g/100g',
-              fat: '1.0g/100g'
+          // Camera or upload - simulate by selecting a random product from local database
+          if (window.localProductDB && window.localProductDB.getAllProducts().length > 0) {
+            // Get random product from local database for demonstration
+            const allProducts = window.localProductDB.getAllProducts();
+            product = allProducts[Math.floor(Math.random() * allProducts.length)];
+            console.log('Random product selected from local database:', product);
+          } else {
+            // Fallback if local database is empty
+            product = {
+              barcode: 'IMAGE_' + Date.now().toString(),
+              name: 'Fazer Puikula Rye Bread',
+              brand: 'Fazer',
+              origin: 'Finland',
+              ingredients: 'Wholegrain rye flour, water, wheat flour, rye malt, salt, yeast, E300, E472e',
+              nutritionalValues: {
+                calories: '215 kcal/100g',
+                protein: '6.9g/100g',
+                carbohydrates: '40g/100g',
+                fat: '1.0g/100g'
+              }
+            };
+            
+            // Save to local database
+            if (window.localProductDB) {
+              window.localProductDB.addProduct(product);
             }
-          };
+          }
         }
         
         // Analyze for allergens
@@ -880,6 +1054,36 @@
       }, 1500);
     }
     
+    // Function to highlight E-codes and allergens in text
+    function highlightIngredientsText(text, allergens, eCodes) {
+      if (!text) return '';
+      
+      let highlightedText = text;
+      
+      // First replace E-codes
+      eCodes.forEach(eCode => {
+        const regex = new RegExp(`\\b${eCode.code}\\b`, 'gi');
+        highlightedText = highlightedText.replace(regex, 
+          `<span class="e-number-link" data-ecode="${eCode.code}">${eCode.code}</span>`);
+      });
+      
+      // Look for potential e-code format like E330
+      const eCodeRegex = /\b[Ee][-\s]?(\d{3,4}[a-z]?)\b/g;
+      highlightedText = highlightedText.replace(eCodeRegex, function(match) {
+        const normalizedCode = 'E' + match.replace(/[^0-9a-z]/gi, '').substring(1);
+        return `<span class="e-number-link" data-ecode="${normalizedCode}">${match}</span>`;
+      });
+      
+      // Then highlight allergens
+      allergens.forEach(allergen => {
+        const regex = new RegExp(`\\b${allergen.name}\\b`, 'gi');
+        highlightedText = highlightedText.replace(regex, 
+          `<span class="allergen-link" data-allergen="${allergen.name}">${allergen.name}</span>`);
+      });
+      
+      return highlightedText;
+    }
+    
     function renderProductDetails(product, allergens, eCodes) {
       // Create tabs for different sections
       const tabsHTML = `
@@ -890,29 +1094,36 @@
         </div>
       `;
       
+      // Highlight ingredients text with links
+      const highlightedIngredients = highlightIngredientsText(product.ingredients, allergens, eCodes);
+      
       // Overview tab content
       const overviewHTML = `
         <div class="tab-content active" id="overview-content">
           <h3>${product.name}</h3>
           <p><strong>Brand:</strong> ${product.brand}</p>
           <p><strong>Origin:</strong> ${product.origin}</p>
-          <p><strong>Ingredients:</strong> ${product.ingredients}</p>
+          <p><strong>Ingredients:</strong> ${highlightedIngredients}</p>
           
           <div class="detail-section">
-            <h4>Identified Allergens:</h4>
-            <div id="allergen-tags">
-              ${allergens.length > 0 ? 
-                allergens.map(a => `<span class="allergen-tag" data-allergen="${a.name}">${a.name}</span>`).join(' ') 
-                : '<span>None detected</span>'}
+            <div class="tag-section">
+              <span class="tag-section-title">Identified Allergens:</span>
+              <div class="tag-container" id="allergen-tags">
+                ${allergens.length > 0 ? 
+                  allergens.map(a => `<span class="allergen-tag" data-allergen="${a.name}">${a.name}</span>`).join('') 
+                  : '<span>None detected</span>'}
+              </div>
             </div>
           </div>
           
           <div class="detail-section">
-            <h4>Identified E-Numbers:</h4>
-            <div id="ecode-tags">
-              ${eCodes.length > 0 ? 
-                eCodes.map(e => `<span class="e-code-tag" data-ecode="${e.code}">${e.code} (${e.name})</span>`).join(' ') 
-                : '<span>None detected</span>'}
+            <div class="tag-section">
+              <span class="tag-section-title">Identified E-Numbers:</span>
+              <div class="tag-container" id="ecode-tags">
+                ${eCodes.length > 0 ? 
+                  eCodes.map(e => `<span class="e-code-tag" data-ecode="${e.code}">${e.code} (${e.name})</span>`).join('') 
+                  : '<span>None detected</span>'}
+              </div>
             </div>
           </div>
           
@@ -997,6 +1208,40 @@
           const ecodeElement = document.getElementById(`ecode-${tag.dataset.ecode.replace(/[^a-zA-Z0-9]/g, '')}`);
           if (ecodeElement) {
             ecodeElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+      
+      // Add click events to E-code links in ingredients text
+      document.querySelectorAll('.e-number-link').forEach(link => {
+        link.addEventListener('click', () => {
+          // Switch to e-codes tab
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          document.querySelector('.tab[data-tab="additives"]').classList.add('active');
+          document.getElementById('additives-content').classList.add('active');
+          
+          // Scroll to the specific E-code
+          const ecodeElement = document.getElementById(`ecode-${link.dataset.ecode.replace(/[^a-zA-Z0-9]/g, '')}`);
+          if (ecodeElement) {
+            ecodeElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+      
+      // Add click events to allergen links in ingredients text
+      document.querySelectorAll('.allergen-link').forEach(link => {
+        link.addEventListener('click', () => {
+          // Switch to allergens tab
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          document.querySelector('.tab[data-tab="allergens"]').classList.add('active');
+          document.getElementById('allergens-content').classList.add('active');
+          
+          // Scroll to the specific allergen
+          const allergenElement = document.getElementById(`allergen-${link.dataset.allergen}`);
+          if (allergenElement) {
+            allergenElement.scrollIntoView({ behavior: 'smooth' });
           }
         });
       });
