@@ -1703,20 +1703,26 @@
       const name = document.getElementById('product-name').value.trim();
       const brand = document.getElementById('product-brand').value.trim();
       const ingredients = document.getElementById('product-ingredients').value.trim();
+      const barcode = document.getElementById('product-barcode').value.trim();
       
       if (name === '' || brand === '' || ingredients === '') {
-        alert('Please fill out all fields');
+        alert('Please fill out all required fields');
         return;
       }
       
-      analyzeProduct('manual');
+      // Set barcode data for database storage if provided
+      if (barcode) {
+        localStorage.setItem('last_scanned_barcode', barcode);
+      }
+      
+      analyzeProduct('manual', barcode);
     });
     
     // Current displayed product
     let currentDisplayedProduct = null;
     
     // Analyze product and display results
-    function analyzeProduct(method) {
+    function analyzeProduct(method, providedBarcode = null) {
       // Hide all input containers
       resetActiveSections();
       
@@ -1818,6 +1824,7 @@
           const name = document.getElementById('product-name').value;
           const brand = document.getElementById('product-brand').value;
           const ingredients = document.getElementById('product-ingredients').value;
+          const manualBarcode = document.getElementById('product-barcode').value.trim();
           
           product = {
             name: name,
@@ -1832,12 +1839,13 @@
             }
           };
           
-          // Save to local database with generated barcode
+          // Save to local database with barcode
           if (window.localProductDB) {
-            const generatedBarcode = 'USER_' + Date.now().toString();
-            product.barcode = generatedBarcode;
+            // Use provided barcode or generate one if none provided
+            const productBarcode = manualBarcode || providedBarcode || ('USER_' + Date.now().toString());
+            product.barcode = productBarcode;
             window.localProductDB.addProduct(product);
-            console.log('User-entered product added to local database');
+            console.log('User-entered product added to local database with barcode:', productBarcode);
           }
         } else {
           // Camera or upload - simulate by selecting a random product from local database
