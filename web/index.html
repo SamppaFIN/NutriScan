@@ -215,14 +215,6 @@
     .quick-link i { font-size: 14px; }
 
     /* ── Barcode scan area ──────────────────── */
-    .barcode-scan-area {
-      padding: 20px; background: var(--surface);
-      border-radius: var(--radius); border: 1px solid var(--border);
-    }
-    .barcode-scan-area video {
-      width: 100%; max-height: 200px; border-radius: 10px; display: none;
-    }
-    #barcode-scanner { display: none; }
 
     /* ── Page View (allergen/recipe banks) ──── */
     .page-view {
@@ -743,7 +735,6 @@
         <hr class="menu-divider">
         <button id="menu-camera-btn"><i class="fas fa-camera"></i> Kameraskannaus</button>
         <button id="menu-upload-btn"><i class="fas fa-upload"></i> Lataa kuva</button>
-        <button id="menu-barcode-btn"><i class="fas fa-barcode"></i> Viivakoodihaku</button>
         <button id="menu-manual-btn"><i class="fas fa-keyboard"></i> Syötä tiedot</button>
         <hr class="menu-divider">
         <button id="menu-allergen-bank"><i class="fas fa-shield-alt"></i> Allergeenipankki</button>
@@ -770,9 +761,8 @@
             </div>
           </div>
           <div class="ctrl-btns">
-            <button class="btn btn-primary" id="capture-image" style="display:none;"><i class="fas fa-camera"></i> Capture</button>
-            <button class="btn btn-ghost" id="retake-image" style="display:none;"><i class="fas fa-redo"></i> Retake</button>
-            <button class="btn btn-primary" id="analyze-camera-image" style="display:none;"><i class="fas fa-search"></i> Analyze</button>
+            <button class="btn btn-primary" id="capture-image" style="display:none;"><i class="fas fa-camera"></i> Ota kuva</button>
+            <button class="btn btn-ghost" id="retake-image" style="display:none;"><i class="fas fa-redo"></i> Uusi</button>
           </div>
         </div>
 
@@ -784,23 +774,6 @@
             <input type="file" id="file-input" accept="image/*" style="display:none;">
           </div>
           <img id="image-preview" alt="Preview">
-          <button class="btn btn-primary" id="analyze-upload" style="display:none;width:100%;"><i class="fas fa-search"></i> Analyze Image</button>
-        </div>
-
-        <!-- Barcode -->
-        <div class="control-content" id="control-barcode">
-          <div class="barcode-scan-area" style="border:none;padding:0;background:none;">
-            <div class="quick-scan" style="margin-bottom:10px;">
-              <input type="text" id="barcode-input" placeholder="Syötä viivakoodinumero…" inputmode="numeric" autocomplete="off">
-              <button class="btn btn-primary" id="lookup-barcode">Hae</button>
-            </div>
-            <div style="text-align:center;color:var(--text2);font-size:12px;margin:8px 0;">— tai —</div>
-            <button class="btn btn-ghost" id="scan-barcode" style="width:100%;"><i class="fas fa-camera"></i> Skannaa kameralla</button>
-            <div id="barcode-scanner">
-              <video id="barcode-video" autoplay playsinline></video>
-              <button class="btn btn-ghost" id="close-scanner"><i class="fas fa-times"></i> Close</button>
-            </div>
-          </div>
         </div>
 
         <!-- Manual -->
@@ -817,7 +790,6 @@
       <div class="method-selector">
         <button class="method-tab active" data-method="camera"><i class="fas fa-camera"></i> Kamera</button>
         <button class="method-tab" data-method="upload"><i class="fas fa-upload"></i> Lataa</button>
-        <button class="method-tab" data-method="barcode"><i class="fas fa-barcode"></i> Viivakoodi</button>
         <button class="method-tab" data-method="manual"><i class="fas fa-keyboard"></i> Käsin</button>
       </div>
 
@@ -949,6 +921,12 @@
           <p>Get key from <a href="https://developer.edamam.com/edamam-recipe-api" target="_blank" style="color:var(--accent)">Edamam</a></p>
           <input type="text" id="edamam-app-id" placeholder="App ID">
           <input type="text" id="edamam-app-key" placeholder="App Key">
+        </div>
+        <!-- Vision AI -->
+        <div class="api-key-form-section" style="margin-top:16px;">
+          <h3>🤖 AI Vision</h3>
+          <p>OpenAI API key for <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--accent)">GPT-4 Vision</a></p>
+          <input type="password" id="vision-api-key" placeholder="sk-...">
         </div>
         <!-- Premium Section -->
         <div class="premium-section">
@@ -1161,7 +1139,10 @@
       document.getElementById('camera-placeholder')?.click();
     });
     document.getElementById('menu-upload-btn')?.addEventListener('click', () => switchMethod('upload'));
-    document.getElementById('menu-barcode-btn')?.addEventListener('click', () => switchMethod('barcode'));
+    document.getElementById('menu-barcode-btn')?.addEventListener('click', () => {
+      switchMethod('camera');
+      document.getElementById('camera-placeholder')?.click();
+    });
     document.getElementById('menu-manual-btn')?.addEventListener('click', () => switchMethod('manual'));
 
     // ── Method Selector ────────────────────────────────────
@@ -1502,20 +1483,12 @@
     // DOM elements
     const captureBtn = document.getElementById('capture-image');
     const retakeBtn = document.getElementById('retake-image');
-    const analyzeCameraBtn = document.getElementById('analyze-camera-image');
     const videoPreview = document.getElementById('video-preview');
     const capturedImage = document.getElementById('captured-image');
     const cameraPlaceholder = document.getElementById('camera-placeholder');
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('file-input');
     const imagePreview = document.getElementById('image-preview');
-    const analyzeUploadBtn = document.getElementById('analyze-upload');
-    const barcodeInput = document.getElementById('barcode-input');
-    const scanBarcodeBtn = document.getElementById('scan-barcode');
-    const lookupBarcodeBtn = document.getElementById('lookup-barcode');
-    const barcodeScanner = document.getElementById('barcode-scanner');
-    const barcodeVideo = document.getElementById('barcode-video');
-    const closeScannerBtn = document.getElementById('close-scanner');
     const submitManualBtn = document.getElementById('submit-manual');
     const loading = document.getElementById('loading');
     const resultContainer = document.getElementById('result');
@@ -1523,20 +1496,14 @@
     
     let stream = null;
     
-    // Helper — redirect to method selector
-    function resetActiveSections() {
-      // No-op: method selector handles this now
-    }
+    function resetActiveSections() {}
     function activateTab(tabId) {
-      // Map old tab IDs to method selector
       const map = { 'upload': 'upload', 'barcode': 'barcode', 'manual-entry': 'manual' };
-      const method = map[tabId] || 'camera';
-      switchMethod(method);
+      switchMethod(map[tabId] || 'camera');
     }
-    // Keep reference to camera stream globally for cleanup
     window._cameraStream = null;
     
-    // Camera — placeholder click starts camera
+    // ── Camera: start, capture, auto-analyze ──────────────
     document.getElementById('camera-placeholder')?.addEventListener('click', async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
@@ -1553,39 +1520,94 @@
       }
     });
     
-    captureBtn.addEventListener('click', () => {
-      // Create canvas to capture frame from video
+    // ── Capture: auto-analyze with cascade ────────────────
+    captureBtn.addEventListener('click', async () => {
+      // Capture frame from video
       const canvas = document.createElement('canvas');
       canvas.width = videoPreview.videoWidth;
       canvas.height = videoPreview.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
+      const imageDataUrl = canvas.toDataURL('image/png');
       
-      // Display captured image and hide video
-      capturedImage.src = canvas.toDataURL('image/png');
+      // Show captured image
+      capturedImage.src = imageDataUrl;
       capturedImage.style.display = 'block';
       videoPreview.style.display = 'none';
       captureBtn.style.display = 'none';
-      retakeBtn.style.display = 'inline-block';
-      analyzeCameraBtn.style.display = 'inline-block';
       
       // Stop camera stream
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
         window._cameraStream = null;
       }
+      
+      // Show loading
+      loading.classList.add('show');
+      resultContainer.classList.remove('visible');
+      
+      // Cascade: 1) Barcode → 2) Number → 3) AI Vision
+      let product = null;
+      
+      // Step 1: Try barcode detection from captured image
+      try {
+        if ('BarcodeDetector' in window) {
+          const detector = new BarcodeDetector();
+          const barcodes = await detector.detect(capturedImage);
+          if (barcodes.length > 0) {
+            const code = barcodes[0].rawValue;
+            showToast('Viivakoodi tunnistettu: ' + code, 'info');
+            // Look up via barcode
+            product = await lookupProductByBarcode(code);
+            if (product) {
+              loading.classList.remove('show');
+              renderProductResult(product);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        console.log('BarcodeDetector unavailable or failed:', e.message);
+      }
+      
+      // Step 2: Try to find numbers in image (simulated)
+      // In real app: OCR via Tesseract.js or similar
+      showToast('Viivakoodia ei löytynyt, yritetään OCR:ää…', 'info');
+      
+      // Step 3: AI Vision
+      const visionKey = localStorage.getItem('visionApiKey');
+      if (visionKey) {
+        showToast('Yritetään AI-visio…', 'info');
+        try {
+          const result = await window.analyzeWithVision(imageDataUrl, visionKey);
+          if (result && result.name) {
+            product = await lookupProductByName(result.name);
+          }
+        } catch (e) {
+          console.error('Vision analysis failed:', e);
+        }
+      }
+      
+      // Fallback: submit as manual query
+      if (!product) {
+        loading.classList.remove('show');
+        showToast('Tuotetta ei tunnistettu. Syötä tiedot käsin.', 'warn');
+        switchMethod('manual');
+        // Pre-fill from vision if available
+      }
     });
     
+    // ── Retake ─────────────────────────────────────────────
     retakeBtn.addEventListener('click', async () => {
       capturedImage.style.display = 'none';
       retakeBtn.style.display = 'none';
-      analyzeCameraBtn.style.display = 'none';
       
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: 'environment' } 
         });
         videoPreview.srcObject = stream;
+        window._cameraStream = stream;
         videoPreview.style.display = 'block';
         captureBtn.style.display = 'inline-block';
       } catch (err) {
@@ -1594,9 +1616,65 @@
       }
     });
     
-    analyzeCameraBtn.addEventListener('click', () => {
-      analyzeProduct('camera');
-    });
+    // ── Helper: lookup product by barcode ─────────────────
+    async function lookupProductByBarcode(barcode) {
+      if (window.localProductDB) {
+        let p = window.localProductDB.getProductByBarcode(barcode);
+        if (p) return { ...p, _source: 'cache' };
+        p = await window.localProductDB.fetchFromOpenFoodFacts(barcode);
+        if (p) return { ...p, _source: 'off' };
+      }
+      return null;
+    }
+    
+    // ── Helper: AI Vision API ─────────────────────────────
+    window.analyzeWithVision = async function(imageDataUrl, apiKey) {
+      try {
+        const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Tunnista tämä elintarvike. Palauta vain tuotteen nimi ja brandi muodossa: Nimi | Brandi. Jos et tunnista, palauta "UNKNOWN".' },
+                { type: 'image_url', image_url: { url: imageDataUrl } }
+              ]
+            }],
+            max_tokens: 100
+          })
+        });
+        if (!resp.ok) throw new Error('Vision API error: ' + resp.status);
+        const json = await resp.json();
+        const text = json.choices?.[0]?.message?.content?.trim();
+        if (!text || text === 'UNKNOWN') return null;
+        const parts = text.split('|');
+        return { name: parts[0]?.trim(), brand: parts[1]?.trim() };
+      } catch (e) {
+        console.error('Vision API call failed:', e);
+        return null;
+      }
+    };
+    
+    // ── Helper: render product result ─────────────────────
+    function renderProductResult(product) {
+      const allergens = extractAllergensWithDetails(product.ingredients);
+      let eCodes = window.extractECodesFromText ? window.extractECodesFromText(product.ingredients) : [];
+      if (product.ingredients) {
+        const matches = product.ingredients.match(/E[-\s]?\d{3,4}[a-z]?/gi) || [];
+        matches.forEach(m => {
+          const code = 'E' + m.replace(/[^0-9a-z]/gi, '').substring(1);
+          if (!eCodes.find(e => e.code === code)) {
+            eCodes.push({ code, name: 'Tuntematon lisäaine', category: 'Tuntematon', origin: '', function: '', potentialIssues: ['Ei tietokannassa'], commonIn: [] });
+          }
+        });
+      }
+      currentDisplayedProduct = product;
+      renderProductDetails(product, allergens, eCodes);
+      resultContainer.classList.add('visible');
+      resultContainer.scrollIntoView({ behavior: 'smooth' });
+    }
     
     // Drag and drop / file upload functionality
     dropzone.addEventListener('click', () => {
@@ -1631,10 +1709,12 @@
     function handleImageFile(file) {
       if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           imagePreview.src = e.target.result;
           imagePreview.style.display = 'block';
-          analyzeUploadBtn.style.display = 'inline-block';
+          // Auto-analyze upload
+          showToast('Analysoidaan kuvaa…', 'info');
+          await analyzeProduct('upload');
         };
         reader.readAsDataURL(file);
       } else {
@@ -1642,94 +1722,7 @@
       }
     }
     
-    analyzeUploadBtn.addEventListener('click', () => {
-      analyzeProduct('upload');
-    });
-    
-    // Barcode functionality
-    scanBarcodeBtn.addEventListener('click', async () => {
-      barcodeScanner.style.display = 'block';
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
-        });
-        barcodeVideo.srcObject = stream;
-        window._cameraStream = stream;
-        
-        // In a real app, we would use a proper barcode detection library
-        // For this demo, we'll allow the user to confirm when they want to capture the current frame
-        // or ask them to enter a barcode manually if not detected
-        
-        // Add a button for the user to capture or enter manually
-        const captureArea = document.createElement('div');
-        captureArea.style.textAlign = 'center';
-        captureArea.style.margin = '10px 0';
-        captureArea.innerHTML = `
-          <button id="capture-frame-btn" class="btn btn-primary" style="margin-right: 10px">
-            <i class="fas fa-camera"></i> Capture
-          </button>
-          <button id="manual-entry-btn" class="btn btn-ghost">
-            <i class="fas fa-keyboard"></i> Enter Manually
-          </button>
-        `;
-        
-        barcodeScanner.appendChild(captureArea);
-        
-        // Capture button handler
-        document.getElementById('capture-frame-btn').addEventListener('click', () => {
-          // In a real app, this would use a barcode detection library to analyze the current frame
-          // For this demo, prompt the user to enter the barcode they see
-          const detectedBarcode = prompt('Enter the barcode you see in the image:', '');
-          
-          if (detectedBarcode && detectedBarcode.trim() !== '') {
-            if (stream) {
-              stream.getTracks().forEach(track => track.stop());
-              window._cameraStream = null;
-            }
-            barcodeScanner.removeChild(captureArea);
-            barcodeScanner.style.display = 'none';
-            barcodeInput.value = detectedBarcode.trim();
-            
-            // No alert to avoid interrupting the flow
-            analyzeProduct('barcode');
-          }
-        });
-        
-        // Manual entry button handler
-        document.getElementById('manual-entry-btn').addEventListener('click', () => {
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-          }
-          barcodeScanner.removeChild(captureArea);
-          barcodeScanner.style.display = 'none';
-          
-          // Show manual entry tab
-          activateTab('manual-entry');
-        });
-        
-      } catch (err) {
-        console.error('Error accessing camera:', err);
-        showToast('Kameraa ei voitu käyttää. Tarkista käyttöoikeudet.', 'error');
-        barcodeScanner.style.display = 'none';
-      }
-    });
-    
-    closeScannerBtn.addEventListener('click', () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      barcodeScanner.style.display = 'none';
-    });
-    
-    lookupBarcodeBtn.addEventListener('click', () => {
-      if (barcodeInput.value.trim() === '') {
-        showToast('Syötä viivakoodinumero', 'warn');
-        return;
-      }
-      analyzeProduct('barcode');
-    });
-    
-    // Manual entry functionality
+    // ── Manual entry ──────────────────────────────────────
     submitManualBtn.addEventListener('click', () => {
       const name = document.getElementById('product-name').value.trim();
       const brand = document.getElementById('product-brand').value.trim();
@@ -1891,7 +1884,7 @@ loading.classList.remove('show');
 
               document.getElementById('scan-again-btn').addEventListener('click', () => {
                 contentArea.removeChild(notFoundContainer);
-                scanBarcodeBtn.click();
+                switchMethod('camera');
               });
 
               return;
@@ -2452,6 +2445,12 @@ loading.classList.remove('show');
             document.getElementById('edamam-app-key').value = parts[1];
           }
         }
+        
+        // Load saved Vision key
+        const savedVision = localStorage.getItem('visionApiKey');
+        if (savedVision) {
+          document.getElementById('vision-api-key').value = savedVision;
+        }
       } catch (e) {
         console.error('Failed to load API keys:', e);
       }
@@ -2639,6 +2638,12 @@ loading.classList.remove('show');
       const edamamAppKey = document.getElementById('edamam-app-key').value.trim();
       if (edamamAppId && edamamAppKey) {
         apiKeys.edamam = `${edamamAppId}|${edamamAppKey}`;
+      }
+      
+      // Save Vision API key
+      const visionKey = document.getElementById('vision-api-key')?.value?.trim();
+      if (visionKey) {
+        localStorage.setItem('visionApiKey', visionKey);
       }
       
       // Save to local storage
