@@ -713,7 +713,7 @@
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1/dist/quagga.min.js"></script>
 </head>
 <body>
   <div class="app">
@@ -1521,27 +1521,23 @@
       }
     });
     
-    // ── Capture: ZXing-barcode reader (kaikki selaimet) ───
+    // ── Capture: Quagga2 barcode reader (EAN/UPC) ─────────
     captureBtn.addEventListener('click', async () => {
       const canvas = document.createElement('canvas');
-      // Use higher resolution for barcode detection
       canvas.width = Math.max(videoPreview.videoWidth, 800);
       canvas.height = Math.max(videoPreview.videoHeight, 600);
       const ctx = canvas.getContext('2d');
-      // Scale up video frame to fill canvas
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
-      
-      // Preprocess: increase contrast for better barcode detection
+
+      // Contrast boost
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       for (let i = 0; i < imageData.data.length; i += 4) {
         const gray = 0.299 * imageData.data[i] + 0.587 * imageData.data[i+1] + 0.114 * imageData.data[i+2];
-        // Boost contrast: push dark/light to extremes
         const boosted = gray < 100 ? 0 : gray > 180 ? 255 : gray;
         imageData.data[i] = boosted; imageData.data[i+1] = boosted; imageData.data[i+2] = boosted;
       }
       ctx.putImageData(imageData, 0, 0);
-      
       const imageDataUrl = canvas.toDataURL('image/png');
 
       capturedImage.src = imageDataUrl;
@@ -1560,19 +1556,24 @@
       resultContainer.classList.remove('visible');
       let product = null;
 
-      // Step 1: ZXing — pure JS barcode (EAN-13, UPC, Code-128)
+      // Step 1: Quagga2 — EAN-13, UPC (kaikki selaimet)
       try {
-        const hints = new Map();
-        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-          ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
-          ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
-          ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39
-        ]);
-        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-        const reader = new ZXing.BrowserMultiFormatReader(hints);
-        const result = await reader.decodeFromImageUrl(imageDataUrl);
-        if (result) {
-          const code = result.getText();
+        const code = await new Promise((resolve) => {
+          Quagga.decodeSingle({
+            src: imageDataUrl,
+            inputStream: { size: canvas.width },
+            decoder: { readers: ['ean_reader', 'upc_reader', 'ean_8_reader', 'code_128_reader'] },
+            locator: { halfSample: false, patchSize: 'medium' },
+            numOfWorkers: 0
+          }, (result) => {
+            if (result?.codeResult?.code) {
+              resolve(result.codeResult.code);
+            } else {
+              resolve(null);
+            }
+          });
+        });
+        if (code) {
           showToast('Viivakoodi: ' + code, 'info');
           product = await lookupProductByBarcode(code);
           if (product) {
@@ -1582,7 +1583,7 @@
           }
         }
       } catch (e) {
-        console.log('ZXing failed:', e.message);
+        console.log('Quagga2 failed:', e.message);
       }
 
       // Step 2: AI Vision (jos API-avain)
