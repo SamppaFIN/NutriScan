@@ -1524,10 +1524,24 @@
     // ── Capture: ZXing-barcode reader (kaikki selaimet) ───
     captureBtn.addEventListener('click', async () => {
       const canvas = document.createElement('canvas');
-      canvas.width = videoPreview.videoWidth;
-      canvas.height = videoPreview.videoHeight;
+      // Use higher resolution for barcode detection
+      canvas.width = Math.max(videoPreview.videoWidth, 800);
+      canvas.height = Math.max(videoPreview.videoHeight, 600);
       const ctx = canvas.getContext('2d');
+      // Scale up video frame to fill canvas
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
+      
+      // Preprocess: increase contrast for better barcode detection
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const gray = 0.299 * imageData.data[i] + 0.587 * imageData.data[i+1] + 0.114 * imageData.data[i+2];
+        // Boost contrast: push dark/light to extremes
+        const boosted = gray < 100 ? 0 : gray > 180 ? 255 : gray;
+        imageData.data[i] = boosted; imageData.data[i+1] = boosted; imageData.data[i+2] = boosted;
+      }
+      ctx.putImageData(imageData, 0, 0);
+      
       const imageDataUrl = canvas.toDataURL('image/png');
 
       capturedImage.src = imageDataUrl;
