@@ -713,6 +713,7 @@
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
 </head>
 <body>
   <div class="app">
@@ -1520,81 +1521,86 @@
       }
     });
     
-    // ── Capture: auto-analyze with cascade ────────────────
+    // ── Capture: ZXing-barcode reader (kaikki selaimet) ───
     captureBtn.addEventListener('click', async () => {
-      // Capture frame from video
       const canvas = document.createElement('canvas');
       canvas.width = videoPreview.videoWidth;
       canvas.height = videoPreview.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
       const imageDataUrl = canvas.toDataURL('image/png');
-      
-      // Show captured image
+
       capturedImage.src = imageDataUrl;
       capturedImage.style.display = 'block';
       videoPreview.style.display = 'none';
       captureBtn.style.display = 'none';
-      
-      // Stop camera stream
+      retakeBtn.style.display = 'inline-block';
+
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(t => t.stop());
         window._cameraStream = null;
       }
-      
-      // Show loading
+
       loading.classList.add('show');
+      loading.querySelector('p').textContent = 'Tunnistetaan viivakoodia…';
       resultContainer.classList.remove('visible');
-      
-      // Cascade: 1) Barcode → 2) Number → 3) AI Vision
       let product = null;
-      
-      // Step 1: Try barcode detection from captured image
+
+      // Step 1: ZXing — pure JS barcode (EAN-13, UPC, Code-128)
       try {
-        if ('BarcodeDetector' in window) {
-          const detector = new BarcodeDetector();
-          const barcodes = await detector.detect(capturedImage);
-          if (barcodes.length > 0) {
-            const code = barcodes[0].rawValue;
-            showToast('Viivakoodi tunnistettu: ' + code, 'info');
-            // Look up via barcode
-            product = await lookupProductByBarcode(code);
+        const hints = new Map();
+        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+          ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+          ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
+          ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39
+        ]);
+        hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+        const reader = new ZXing.BrowserMultiFormatReader(hints);
+        const result = await reader.decodeFromImageUrl(imageDataUrl);
+        if (result) {
+          const code = result.getText();
+          showToast('Viivakoodi: ' + code, 'info');
+          product = await lookupProductByBarcode(code);
+          if (product) {
+            loading.classList.remove('show');
+            renderProductResult(product);
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('ZXing failed:', e.message);
+      }
+
+      // Step 2: AI Vision (jos API-avain)
+      const visionKey = localStorage.getItem('visionApiKey');
+      if (visionKey) {
+        loading.querySelector('p').textContent = 'Yritetään AI-visio…';
+        try {
+          const v = await window.analyzeWithVision(imageDataUrl, visionKey);
+          if (v?.name) {
+            product = await lookupProductByName(v.name);
             if (product) {
               loading.classList.remove('show');
               renderProductResult(product);
               return;
             }
           }
-        }
-      } catch (e) {
-        console.log('BarcodeDetector unavailable or failed:', e.message);
+        } catch (e) {}
       }
-      
-      // Step 2: Try to find numbers in image (simulated)
-      // In real app: OCR via Tesseract.js or similar
-      showToast('Viivakoodia ei löytynyt, yritetään OCR:ää…', 'info');
-      
-      // Step 3: AI Vision
-      const visionKey = localStorage.getItem('visionApiKey');
-      if (visionKey) {
-        showToast('Yritetään AI-visio…', 'info');
-        try {
-          const result = await window.analyzeWithVision(imageDataUrl, visionKey);
-          if (result && result.name) {
-            product = await lookupProductByName(result.name);
-          }
-        } catch (e) {
-          console.error('Vision analysis failed:', e);
-        }
+
+      // Step 3: Kysy viivakoodia
+      loading.classList.remove('show');
+      const code = prompt('Viivakoodia ei tunnistettu kuvasta.\nSyötä viivakoodinumero:', '');
+      if (code?.trim()) {
+        product = await lookupProductByBarcode(code.trim());
+        if (product) { renderProductResult(product); return; }
+        if (confirm('Tuotetta ei löytynyt. Haluatko avata Open Food Facts -sivun?'))
+          window.open('https://world.openfoodfacts.org/product/' + code.trim(), '_blank');
+        return;
       }
-      
-      // Fallback: submit as manual query
-      if (!product) {
-        loading.classList.remove('show');
-        showToast('Tuotetta ei tunnistettu. Syötä tiedot käsin.', 'warn');
-        switchMethod('manual');
-        // Pre-fill from vision if available
-      }
+
+      showToast('Siirrytään manuaaliseen syöttöön', 'warn');
+      switchMethod('manual');
     });
     
     // ── Retake ─────────────────────────────────────────────
