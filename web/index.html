@@ -2,1380 +2,997 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Finnish Food Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>NutriScan</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    :root {
+      --bg: #0a0a0f;
+      --surface: #14141f;
+      --surface2: #1e1e2e;
+      --text: #e0e0f0;
+      --text2: #9898b0;
+      --accent: #4ade80;
+      --accent2: #22c55e;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --border: #2a2a3a;
+      --radius: 16px;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
-    
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      height: 100%;
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
+      height: 100%; overflow: hidden;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
     }
-    
-    .container {
-      max-width: 800px;
-      height: 100%;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
+
+    /* ── App Shell ────────────────────────────── */
+    .app {
+      display: flex; flex-direction: column;
+      height: 100%; height: 100dvh;
+      max-width: 480px; margin: 0 auto;
+      position: relative; overflow: hidden;
     }
-    
-    .header {
-      background-color: #3F51B5;
-      color: white;
-      padding: 20px 0;
-      text-align: center;
+
+    /* ── Header ───────────────────────────────── */
+    .topbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 100; flex-shrink: 0;
     }
-    
-    .header h1 {
-      font-size: 22px;
-      font-weight: bold;
+    .hamburger {
+      width: 40px; height: 40px; border: none; background: none;
+      color: var(--text); font-size: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px; transition: background .2s;
     }
-    
-    .content {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
+    .hamburger:hover { background: var(--surface2); }
+    .logo {
+      font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent), #34d399);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    
-    .section {
-      background-color: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 30px;
-      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+
+    /* ── Side Menu ────────────────────────────── */
+    .menu-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 200; opacity: 0; pointer-events: none;
+      transition: opacity .3s;
     }
-    
-    .section-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      color: #3F51B5;
+    .menu-overlay.open { opacity: 1; pointer-events: auto; }
+    .side-menu {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: 280px; max-width: 80vw;
+      background: var(--surface); z-index: 201;
+      transform: translateX(-100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--border);
     }
-    
-    .paragraph {
-      font-size: 16px;
-      line-height: 24px;
-      color: #333;
-      margin-bottom: 15px;
+    .side-menu.open { transform: translateX(0); }
+    .side-menu-header {
+      padding: 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
     }
-    
-    .feature-item {
-      margin-bottom: 15px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
+    .side-menu-header .logo { font-size: 18px; }
+    .side-menu-nav {
+      flex: 1; overflow-y: auto; padding: 8px 0;
     }
-    
-    .feature-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: #212121;
+    .side-menu-nav a, .side-menu-nav button {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 20px; color: var(--text2);
+      text-decoration: none; font-size: 15px; font-family: var(--font);
+      background: none; border: none; width: 100%; cursor: pointer;
+      transition: all .15s;
     }
-    
-    .feature-description {
-      font-size: 14px;
-      color: #757575;
-      line-height: 20px;
+    .side-menu-nav a:hover, .side-menu-nav button:hover {
+      background: var(--surface2); color: var(--text);
     }
-    
-    .upcoming-features {
-      background-color: #F5F5F5;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 15px 0;
-      border-left: 4px solid #3F51B5;
+    .side-menu-nav a i, .side-menu-nav button i {
+      width: 20px; text-align: center; font-size: 16px;
     }
-    
-    .upcoming-features ul {
-      margin-top: 10px;
-      margin-bottom: 10px;
+    .menu-divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 8px 16px;
     }
-    
-    .upcoming-features li {
-      margin-bottom: 8px;
-      font-size: 14px;
+
+    /* ── Hero ─────────────────────────────────── */
+    .hero {
+      flex: 1; display: flex; flex-direction: column;
+      padding: 16px; gap: 14px; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    
-    .upcoming-features i {
-      margin-right: 8px;
-      width: 16px;
-      text-align: center;
+
+    /* ── Camera Viewfinder ──────────────────── */
+    .camera-viewfinder {
+      position: relative; width: 100%; flex: 1;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden; display: flex;
+      align-items: center; justify-content: center;
     }
-    
-    /* Scanner section styles */
-    .scanner-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-top: 20px;
-    }
-    
-    .scanner-option {
-      flex: 1;
-      min-width: 150px;
-      background-color: #f5f5f5;
-      border-radius: 8px;
-      padding: 15px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .scanner-option:hover {
-      background-color: #e0e0e0;
-      transform: translateY(-2px);
-    }
-    
-    .scanner-option i {
-      font-size: 32px;
-      color: #3F51B5;
-      margin-bottom: 10px;
-      display: block;
-    }
-    
-    .scanner-option-title {
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: #333;
-    }
-    
-    .scanner-option-desc {
-      font-size: 12px;
-      color: #666;
-    }
-    
-    .input-container {
-      margin-top: 15px;
+    .camera-viewfinder video,
+    .camera-viewfinder img {
+      width: 100%; height: 100%; object-fit: cover;
       display: none;
     }
-    
-    .active {
-      display: block;
+    .camera-viewfinder video.show,
+    .camera-viewfinder img.show { display: block; }
+    .camera-placeholder {
+      text-align: center; color: var(--text2); padding: 30px;
+      cursor: pointer; width: 100%;
+      transition: background .2s;
     }
-    
-    .camera-container, .dropzone {
-      border: 2px dashed #3F51B5;
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 15px;
-      text-align: center;
-      background-color: #f9f9f9;
+    .camera-placeholder:hover {
+      background: rgba(255,255,255,.02);
     }
-    
-    .dropzone {
-      position: relative;
-      min-height: 150px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+    .camera-placeholder i { font-size: 48px; margin-bottom: 10px; display: block; }
+    .camera-placeholder p { font-size: 14px; margin-top: 8px; }
+
+    /* ── Control Area ───────────────────────── */
+    .control-area { width: 100%; }
+    .control-content {
+      display: none; flex-direction: column; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+      height: 380px; overflow-y: auto;
     }
-    
-    #file-input {
-      display: none;
+    .control-content.active { display: flex; }
+    .control-content input,
+    .control-content textarea {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-size: 14px; font-family: var(--font);
+      outline: none; transition: border-color .2s;
     }
-    
-    #video-preview, #image-preview {
-      max-width: 100%;
-      max-height: 300px;
-      margin-top: 15px;
-      border-radius: 8px;
-      display: none;
+    .control-content input:focus,
+    .control-content textarea:focus {
+      border-color: var(--accent);
     }
-    
+    .control-content textarea {
+      resize: vertical; min-height: 80px;
+    }
+    .control-content input::placeholder,
+    .control-content textarea::placeholder {
+      color: #555;
+    }
+    .ctrl-btns {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      justify-content: center; margin-top: 4px;
+    }
+    .ctrl-btns .btn {
+      padding: 10px 18px; font-size: 13px; border-radius: 24px;
+    }
+
+    /* ── Method Selector ────────────────────── */
+    .method-selector {
+      display: flex; gap: 6px; width: 100%;
+    }
+    .method-tab {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      gap: 5px; padding: 10px 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text2);
+      font-size: 12px; font-weight: 600; font-family: var(--font);
+      cursor: pointer; transition: all .2s;
+    }
+    .method-tab i { font-size: 13px; }
+    .method-tab.active {
+      background: var(--accent); color: #000; border-color: var(--accent);
+    }
+    .method-tab:hover:not(.active) {
+      border-color: var(--accent); color: var(--text);
+    }
+
+    /* ── Quick Links ─────────────────────────── */
+    .quick-links {
+      display: flex; gap: 8px; width: 100%;
+    }
+    .quick-link {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 10px 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-size: 13px; font-weight: 500; font-family: var(--font);
+      cursor: pointer; transition: all .2s;
+    }
+    .quick-link:first-child {
+      color: var(--danger);
+    }
+    .quick-link:last-child {
+      color: var(--accent);
+    }
+    .quick-link:hover, .quick-link:active {
+      border-color: var(--accent); background: var(--surface2);
+    }
+    .quick-link i { font-size: 14px; }
+
+    /* ── Barcode scan area ──────────────────── */
+    .barcode-scan-area {
+      padding: 20px; background: var(--surface);
+      border-radius: var(--radius); border: 1px solid var(--border);
+    }
+    .barcode-scan-area video {
+      width: 100%; max-height: 200px; border-radius: 10px; display: none;
+    }
+    #barcode-scanner { display: none; }
+
+    /* ── Page View (allergen/recipe banks) ──── */
+    .page-view {
+      display: none; flex: 1; flex-direction: column;
+      padding: 16px; overflow-y: auto;
+    }
+    .page-view.active { display: flex; }
+    .page-view-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .page-back-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .page-view-title { font-size: 18px; font-weight: 700; }
+
+    /* ── Quick Barcode ───────────────────────── */
+    .quick-scan {
+      width: 100%; max-width: 320px;
+      display: flex; gap: 8px;
+    }
+    .quick-scan input {
+      flex: 1; padding: 14px 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-size: 15px; font-family: var(--font);
+    }
+    .quick-scan input:focus {
+      outline: none; border-color: var(--accent);
+    }
+    .quick-scan input::placeholder { color: #555; }
     .btn {
-      background-color: #3F51B5;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-      transition: background-color 0.3s ease;
+      padding: 14px 20px; border: none; border-radius: var(--radius);
+      font-size: 15px; font-weight: 600; font-family: var(--font);
+      cursor: pointer; transition: all .2s;
+      white-space: nowrap;
     }
-    
-    .btn:hover {
-      background-color: #303F9F;
+    .btn-primary {
+      background: var(--accent); color: #000;
     }
-    
-    .btn-secondary {
-      background-color: #757575;
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-ghost {
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border);
     }
-    
-    .btn-secondary:hover {
-      background-color: #616161;
+
+    /* ── Input panels (camera/upload/barcode/manual) ── */
+    .panel {
+      display: none; flex-direction: column; gap: 12px;
+      padding: 20px; width: 100%; max-width: 360px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-top: 8px;
     }
-    
-    .input-group {
-      margin-bottom: 15px;
+    .panel.open { display: flex; }
+    .panel h3 { font-size: 16px; color: var(--accent); }
+    .panel p { font-size: 13px; color: var(--text2); }
+    .panel input, .panel textarea {
+      width: 100%; padding: 12px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 14px; font-family: var(--font);
     }
-    
-    .input-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #333;
+    .panel textarea { resize: vertical; min-height: 80px; }
+    .panel input:focus, .panel textarea:focus {
+      outline: none; border-color: var(--accent);
     }
-    
-    .input-group input, .input-group textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: inherit;
+    .panel .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    #video-preview, #captured-image, #image-preview {
+      max-width: 100%; max-height: 100%; border-radius: 10px; display: none;
     }
-    
-    .loading-indicator {
-      display: none;
-      margin: 20px auto;
-      text-align: center;
-      color: #3F51B5;
+    #barcode-scanner { display: none; }
+
+    /* ── Result ──────────────────────────────── */
+    .result-panel {
+      display: none; width: 100%;
+      background: var(--surface); border: 1px solid var(--accent);
+      border-radius: var(--radius); padding: 16px;
+      margin-top: 8px;
     }
-    
-    .result-container {
-      display: none;
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 8px;
-      background-color: #e8f5e9;
-      border-left: 4px solid #4CAF50;
+    .result-panel.visible { display: block; }
+    .result-panel h3 { color: var(--accent); margin-bottom: 8px; }
+
+    /* ── Loading ─────────────────────────────── */
+    .loading-spinner {
+      display: none; flex-direction: column; align-items: center;
+      gap: 12px; padding: 30px; color: var(--text2);
     }
-    
-    /* Allergen and E-code styling */
-    .allergen-tag {
-      display: inline-block;
-      background-color: #FFEBEE;
-      color: #C62828;
-      border: 1px solid #EF9A9A;
-      border-radius: 4px;
-      padding: 2px 8px;
-      margin: 2px;
-      font-size: 12px;
-      cursor: pointer;
+    .loading-spinner.show { display: flex; }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .7s linear infinite;
     }
-    
-    .e-code-tag {
-      display: inline-block;
-      background-color: #E8EAF6;
-      color: #3949AB;
-      border: 1px solid #9FA8DA;
-      border-radius: 4px;
-      padding: 2px 8px;
-      margin: 2px;
-      font-size: 12px;
-      cursor: pointer;
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Not Found ───────────────────────────── */
+    .not-found-panel {
+      display: none; text-align: center; padding: 20px;
+      width: 100%; max-width: 320px;
+      background: var(--surface); border: 1px solid var(--warn);
+      border-radius: var(--radius); margin-top: 8px;
     }
-    
-    .allergen-details, .e-code-details {
-      margin-top: 15px;
-      padding: 15px;
-      border-radius: 8px;
-      display: none;
+
+    /* ── Tabs inside result ──────────────────── */
+    .tab-bar {
+      display: flex; gap: 4px; margin-bottom: 12px;
+      border-bottom: 1px solid var(--border); padding-bottom: 8px;
     }
-    
-    .allergen-details {
-      background-color: #FFEBEE;
-      border: 1px solid #EF9A9A;
+    .tab-bar .tab {
+      padding: 6px 14px; border-radius: 20px; font-size: 13px;
+      cursor: pointer; color: var(--text2); background: none; border: none;
+      font-family: var(--font); transition: all .2s;
     }
-    
-    .e-code-details {
-      background-color: #E8EAF6;
-      border: 1px solid #9FA8DA;
-    }
-    
-    .symptom-severity {
-      margin-top: 10px;
-    }
-    
-    .symptom-severity h5 {
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    
-    .symptom-list {
-      list-style-type: none;
-      padding-left: 0;
-    }
-    
-    .symptom-list li {
-      padding: 5px 0;
-      font-size: 14px;
-    }
-    
-    .severity-mild {
-      color: #2E7D32;
-    }
-    
-    .severity-moderate {
-      color: #EF6C00;
-    }
-    
-    .severity-severe {
-      color: #B71C1C;
-    }
-    
-    .common-in {
-      margin-top: 10px;
-      font-size: 14px;
-    }
-    
-    .common-in span {
-      display: inline-block;
-      background-color: #F5F5F5;
-      border-radius: 4px;
-      padding: 2px 6px;
-      margin: 2px;
-      font-size: 12px;
-    }
-    
-    .risk-level {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-      margin-left: 5px;
-    }
-    
-    .risk-high {
-      background-color: #FFEBEE;
-      color: #C62828;
-    }
-    
-    .risk-moderate {
-      background-color: #FFF8E1;
-      color: #FF8F00;
-    }
-    
-    .risk-low {
-      background-color: #E8F5E9;
-      color: #2E7D32;
-    }
-    
-    .detail-section {
-      margin-bottom: 15px;
-    }
-    
-    .detail-section h4 {
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-    
-    .tab-container {
-      display: flex;
-      border-bottom: 1px solid #ddd;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-    
-    .tab {
-      padding: 10px 15px;
-      cursor: pointer;
-      background-color: #f5f5f5;
-      border: 1px solid #ddd;
-      border-bottom: none;
-      border-radius: 4px 4px 0 0;
-      margin-right: 5px;
-      margin-bottom: 5px;
-    }
-    
-    .tab.active {
-      background-color: white;
-      border-bottom: 1px solid white;
-      margin-bottom: 4px;
-      font-weight: bold;
-    }
-    
-    .tab-content {
-      display: none;
-    }
-    
-    .tab-content.active {
-      display: block;
-    }
-    
-    .ingredient-highlight {
-      font-weight: bold;
-      cursor: pointer;
-    }
-    
-    .e-number-link {
-      background-color: #E8EAF6;
-      color: #3949AB;
-      border-radius: 3px;
-      padding: 0 4px;
-      cursor: pointer;
-      font-weight: bold;
-      display: inline-block;
-      margin: 0 2px;
-      font-size: 0.9em;
-      transition: all 0.2s ease;
-    }
-    
-    .e-number-link:hover {
-      background-color: #3F51B5;
-      color: white;
-    }
-    
-    .allergen-link {
-      background-color: #FFEBEE;
-      color: #C62828;
-      border-radius: 3px;
-      padding: 0 4px;
-      cursor: pointer;
-      font-weight: bold;
-      display: inline-block;
-      margin: 0 2px;
-      font-size: 0.9em;
-      transition: all 0.2s ease;
-    }
-    
-    .allergen-link:hover {
-      background-color: #C62828;
-      color: white;
-    }
-    
-    .allergen-tag {
-      display: inline-block;
-      background-color: #FFEBEE;
-      color: #C62828;
-      border: 1px solid #EF9A9A;
-      border-radius: 20px;
-      padding: 4px 12px;
-      margin: 4px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .allergen-tag:hover {
-      background-color: #C62828;
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    
-    .e-code-tag {
-      display: inline-block;
-      background-color: #E8EAF6;
-      color: #3949AB;
-      border: 1px solid #9FA8DA;
-      border-radius: 20px;
-      padding: 4px 12px;
-      margin: 4px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .e-code-tag:hover {
-      background-color: #3949AB;
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    
-    .tag-section {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      margin: 10px 0;
-    }
-    
-    .tag-section-title {
-      font-weight: bold;
-      margin-right: 10px;
-      color: #424242;
-    }
-    
-    .tag-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    
-    /* Modal styles */
+    .tab-bar .tab.active { background: var(--accent); color: #000; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Tags ────────────────────────────────── */
+    .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; margin: 2px; }
+    .tag-allergen { background: rgba(248,113,113,.2); color: var(--danger); }
+    .tag-ecode { background: rgba(74,222,128,.2); color: var(--accent); }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+
+    /* ── Modal ───────────────────────────────── */
     .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.5);
+      display: none; position: fixed; z-index: 300; inset: 0;
+      background: rgba(0,0,0,.8); align-items: center; justify-content: center;
     }
-    
-    .modal-content {
-      background-color: #fefefe;
-      margin: 5% auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      width: 80%;
-      max-width: 900px;
-      animation: modalFadeIn 0.3s;
+    .modal.open { display: flex; }
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); width: 90%; max-width: 500px;
+      max-height: 85vh; overflow-y: auto; padding: 20px;
     }
-    
-    @keyframes modalFadeIn {
-      from {opacity: 0; transform: translateY(-20px);}
-      to {opacity: 1; transform: translateY(0);}
+    .modal-box h2 { color: var(--accent); margin-bottom: 12px; }
+    .close-btn {
+      float: right; background: none; border: none;
+      color: var(--text2); font-size: 22px; cursor: pointer;
     }
-    
-    .modal-header {
-      padding: 20px;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+
+    /* ── Recipe Card ─────────────────────────── */
+    .recipe-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;
     }
-    
-    .modal-header h2 {
-      margin: 0;
-      color: #3F51B5;
-      font-size: 20px;
-    }
-    
-    .close-modal {
-      color: #aaa;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    
-    .close-modal:hover {
-      color: #555;
-    }
-    
-    .modal-body {
-      padding: 20px;
-      max-height: 70vh;
-      overflow-y: auto;
-    }
-    
-    .modal-footer {
-      padding: 15px 20px;
-      border-top: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    /* Recipe card styles */
-    .recipe-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    
     .recipe-card {
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      background: var(--surface2); border-radius: 12px; padding: 12px;
+      border: 1px solid var(--border); cursor: pointer; transition: all .2s;
     }
-    
-    .recipe-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    .recipe-card:hover { border-color: var(--accent); }
+    .recipe-card h4 { font-size: 14px; margin-bottom: 4px; }
+    .recipe-card p { font-size: 12px; color: var(--text2); }
+
+    /* ── Dropzone ────────────────────────────── */
+    .dropzone {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 30px; text-align: center; cursor: pointer;
+      transition: all .2s; color: var(--text2);
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
     }
-    
+    .dropzone:hover { border-color: var(--accent); }
+
+    /* ── Scrollbar ───────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Animations ──────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp .4s ease-out; }
+
+    /* ── Tabs ────────────────────────────────── */
+    .tab-container {
+      display: flex; gap: 4px; margin-bottom: 16px;
+      border-bottom: 1px solid var(--border); padding-bottom: 8px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .tab-container .tab {
+      padding: 8px 16px; border-radius: 20px; font-size: 13px;
+      cursor: pointer; color: var(--text2); background: none; border: none;
+      font-family: var(--font); transition: all .2s; white-space: nowrap;
+    }
+    .tab-container .tab.active { background: var(--accent); color: #000; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Tag Sections ────────────────────────── */
+    .tag-section { margin: 12px 0; }
+    .tag-section-title {
+      display: block; font-size: 13px; color: var(--text2);
+      margin-bottom: 6px; font-weight: 600;
+    }
+    .tag-container { display: flex; flex-wrap: wrap; gap: 4px; }
+    .allergen-tag {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; cursor: pointer; transition: all .2s;
+      background: rgba(248,113,113,.2); color: var(--danger);
+    }
+    .allergen-tag:hover { background: rgba(248,113,113,.4); }
+    .e-code-tag {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; cursor: pointer; transition: all .2s;
+      background: rgba(74,222,128,.2); color: var(--accent);
+    }
+    .e-code-tag:hover { background: rgba(74,222,128,.4); }
+
+    /* ── Ingredient text highlights ──────────── */
+    .e-number-link {
+      color: var(--accent); text-decoration: underline;
+      cursor: pointer; font-weight: 600;
+    }
+    .allergen-link {
+      color: var(--danger); text-decoration: underline;
+      cursor: pointer; font-weight: 600;
+    }
+
+    /* ── Detail Sections ─────────────────────── */
+    .detail-section { margin: 12px 0; }
+    .detail-section h4 { font-size: 15px; color: var(--accent); margin-bottom: 6px; }
+    .detail-section h5 { font-size: 13px; margin-bottom: 4px; }
+
+    /* ── Allergen Details ────────────────────── */
+    .allergen-details {
+      background: var(--surface2); border-radius: 12px;
+      padding: 14px; margin-bottom: 12px; border: 1px solid var(--border);
+    }
+    .allergen-details h4 { color: var(--danger); font-size: 15px; margin-bottom: 4px; }
+    .symptom-severity { margin: 8px 0; }
+    .severity-mild { color: var(--warn); font-size: 13px; }
+    .severity-moderate { color: #fb923c; font-size: 13px; }
+    .severity-severe { color: var(--danger); font-size: 13px; }
+    .symptom-list {
+      margin: 4px 0 0 16px; font-size: 13px; color: var(--text2);
+    }
+    .symptom-list li { margin-bottom: 2px; }
+    .common-in { margin-top: 8px; font-size: 13px; color: var(--text2); }
+    .common-in span {
+      display: inline-block; padding: 2px 8px; margin: 2px;
+      background: var(--bg); border-radius: 10px; font-size: 11px;
+    }
+
+    /* ── E-Code Details ──────────────────────── */
+    .e-code-details {
+      background: var(--surface2); border-radius: 12px;
+      padding: 14px; margin-bottom: 12px; border: 1px solid var(--border);
+    }
+    .e-code-details h4 { font-size: 15px; margin-bottom: 4px; }
+    .risk-level {
+      display: inline-block; padding: 2px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; margin-left: 6px;
+    }
+    .risk-low { background: rgba(74,222,128,.2); color: var(--accent); }
+    .risk-moderate { background: rgba(251,191,36,.2); color: var(--warn); }
+    .risk-high { background: rgba(248,113,113,.2); color: var(--danger); }
+
+    /* ── Recipe Cards ────────────────────────── */
+    .recipe-list { display: flex; flex-direction: column; gap: 10px; }
+    .recipe-card {
+      display: flex; gap: 12px; background: var(--surface2);
+      border-radius: 12px; padding: 12px; border: 1px solid var(--border);
+      cursor: pointer; transition: all .2s;
+    }
+    .recipe-card:hover, .recipe-card:active { border-color: var(--accent); }
     .recipe-image {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
+      width: 80px; height: 80px; border-radius: 10px;
+      object-fit: cover; flex-shrink: 0;
     }
-    
     .recipe-icon-placeholder {
-      width: 100%;
-      height: 180px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #f5f5f5;
-      color: #616161;
+      width: 80px; height: 80px; border-radius: 10px; flex-shrink: 0;
+      background: var(--bg); display: flex; align-items: center;
+      justify-content: center; font-size: 28px; color: var(--text2);
     }
-    
-    .recipe-icon-placeholder i {
-      font-size: 48px;
-    }
-    
-    .recipe-details {
-      padding: 15px;
-    }
-    
-    .recipe-title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 8px;
-      color: #333;
-    }
-    
-    .recipe-info {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      font-size: 12px;
-      color: #757575;
-    }
-    
-    .recipe-ingredients {
-      font-size: 13px;
-      color: #555;
-      margin-bottom: 15px;
-    }
-    
+    .recipe-details { flex: 1; min-width: 0; }
     .recipe-provider-badge {
-      display: inline-block;
-      background-color: #E8F5E9;
-      color: #2E7D32;
-      border-radius: 12px;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-weight: bold;
-      margin-bottom: 8px;
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 10px; font-weight: 600; background: rgba(74,222,128,.2);
+      color: var(--accent); margin-bottom: 4px;
     }
-    
-    .recipe-detail-view {
-      margin-top: 20px;
+    .recipe-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .recipe-info {
+      display: flex; gap: 10px; font-size: 11px; color: var(--text2);
+      margin-bottom: 4px;
     }
-    
+    .recipe-ingredients {
+      font-size: 11px; color: var(--text2);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* ── Recipe Detail View ──────────────────── */
+    .recipe-detail-view { color: var(--text); }
     .recipe-detail-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 15px;
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;
     }
-    
-    .recipe-detail-title {
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 5px;
-    }
-    
+    .recipe-detail-title { font-size: 20px; font-weight: 700; }
     .recipe-detail-image {
-      width: 100%;
-      max-height: 350px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 20px;
+      width: 100%; max-height: 250px; object-fit: cover;
+      border-radius: 12px; margin-bottom: 16px;
     }
-    
     .recipe-detail-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-bottom: 20px;
-      font-size: 14px;
+      display: flex; gap: 16px; margin-bottom: 16px;
+      font-size: 13px; color: var(--text2);
     }
-    
-    .recipe-detail-meta-item {
-      display: flex;
-      align-items: center;
-      color: #555;
+    .recipe-detail-meta-item { display: flex; align-items: center; gap: 4px; }
+    .recipe-ingredients-section h3,
+    .recipe-detail-view h3 {
+      font-size: 16px; color: var(--accent); margin: 16px 0 8px;
     }
-    
-    .recipe-detail-meta-item i {
-      color: #3F51B5;
-      margin-right: 5px;
+    .recipe-ingredients-list ul {
+      list-style: none; padding: 0;
     }
-    
-    .recipe-ingredients-list {
-      margin-bottom: 30px;
+    .recipe-ingredients-list li {
+      padding: 6px 0; border-bottom: 1px solid var(--border);
     }
-    
     .recipe-instructions-list {
-      counter-reset: step-counter;
-      list-style-type: none;
-      padding-left: 0;
+      padding-left: 20px; color: var(--text2); font-size: 14px;
     }
-    
-    .recipe-instructions-list li {
-      position: relative;
-      padding-left: 40px;
-      margin-bottom: 15px;
-      counter-increment: step-counter;
-    }
-    
-    .recipe-instructions-list li::before {
-      content: counter(step-counter);
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 28px;
-      height: 28px;
-      background-color: #3F51B5;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-    }
-    
+    .recipe-instructions-list li { margin-bottom: 8px; line-height: 1.5; }
     .recipe-source-link {
-      display: inline-block;
-      margin-top: 20px;
-      color: #3F51B5;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    
-    .recipe-source-link:hover {
-      text-decoration: underline;
-    }
-    
-    .form-group {
-      margin-bottom: 15px;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    
-    .api-key-form-section {
-      margin-bottom: 25px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
-    }
-    
-    .recipe-provider-selector {
-      display: flex;
-      align-items: center;
-    }
-    
-    .recipe-provider-selector label {
-      margin-right: 10px;
-      font-weight: bold;
-    }
-    
-    .recipe-provider-selector select {
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-    }
-    
-    .load-more-container {
-      text-align: center;
-      margin-top: 20px;
-    }
-    
-    /* Toggle Switch */
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 60px;
-      height: 28px;
-      margin-right: 10px;
+      display: inline-block; margin-top: 16px; color: var(--accent);
+      text-decoration: none; font-size: 14px;
     }
 
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
+    /* ── Ingredient Items ────────────────────── */
+    .ingredient-item {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .ingredient-name { flex: 1; font-size: 14px; }
+    .allergen-warning { color: var(--danger); cursor: help; font-size: 14px; }
+    .ingredient-actions { display: flex; gap: 4px; }
+    .ingredient-details {
+      margin: 8px 0 0 0; padding: 10px 14px;
+      background: var(--bg); border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0; font-size: 13px; color: var(--text2);
+    }
+    .add-ingredient-section {
+      background: var(--surface2); padding: 14px;
+      border-radius: 12px; margin-top: 12px;
+    }
+    .add-ingredient-section h4 { font-size: 14px; margin-bottom: 8px; }
+    .add-ingredient-form { display: flex; gap: 8px; }
+    .ingredient-input {
+      flex: 1; padding: 10px 14px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 14px; font-family: var(--font);
+    }
+    .ingredient-input:focus { outline: none; border-color: var(--accent); }
+    .ingredient-search-results {
+      max-height: 180px; overflow-y: auto; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 10px; margin-top: 8px;
+    }
+    .ingredient-search-item {
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      cursor: pointer; font-size: 14px; transition: background .15s;
+    }
+    .ingredient-search-item:hover { background: var(--surface2); }
+
+    /* ── Button Variants ─────────────────────── */
+    .btn-small {
+      padding: 4px 8px; font-size: 12px; border-radius: 6px;
+      cursor: pointer; border: none; font-family: var(--font);
+      transition: all .15s;
+    }
+    .btn-info { background: #3b82f6; color: #fff; }
+    .btn-info:hover { background: #2563eb; }
+    .btn-alt { background: var(--accent); color: #000; }
+    .btn-alt:hover { background: var(--accent2); }
+    .error-back-btn {
+      padding: 10px 20px; border: 1px solid var(--border);
+      border-radius: 10px; background: var(--surface); color: var(--text);
+      cursor: pointer; font-family: var(--font); font-size: 14px;
     }
 
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
+    /* ── Not Found ───────────────────────────── */
+    .not-found-container {
+      text-align: center; padding: 24px; margin-top: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
     }
+    .not-found-container h3 { color: var(--danger); margin: 12px 0 8px; }
+    .not-found-container p { color: var(--text2); font-size: 14px; margin-bottom: 8px; }
 
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 20px;
-      width: 20px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
+    /* ── Filter System ───────────────────────── */
+    .filter-tag {
+      display: inline-block; padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; cursor: pointer; transition: all .2s;
+      background: var(--surface2); color: var(--text2);
+      border: 1px solid var(--border); margin: 3px;
     }
+    .filter-tag:hover, .filter-tag.active {
+      border-color: var(--accent); color: var(--text);
+    }
+    .active-filter-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 10px; border-radius: 15px;
+      font-size: 12px; color: #fff; margin: 3px;
+    }
+    .active-filter-tag .fa-times { cursor: pointer; opacity: .8; }
+    .active-filter-tag .fa-times:hover { opacity: 1; }
 
-    input:checked + .toggle-slider {
-      background-color: #3F51B5;
-    }
-
-    input:checked + .toggle-slider:before {
-      transform: translateX(32px);
-    }
-    
+    /* ── Toggle Switch ───────────────────────── */
     .toggle-container {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0;
     }
-    
-    .toggle-label {
-      font-weight: bold;
+    .toggle-container input[type="checkbox"] {
+      width: 44px; height: 24px; appearance: none;
+      background: var(--border); border-radius: 12px; cursor: pointer;
+      position: relative; transition: background .3s;
     }
-    
-    .toggle-status {
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 10px;
-      margin-left: 10px;
+    .toggle-container input[type="checkbox"]::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #fff; transition: transform .3s;
     }
-    
-    .toggle-on {
-      background-color: #E8F5E9;
-      color: #2E7D32;
+    .toggle-container input[type="checkbox"]:checked {
+      background: var(--accent);
     }
-    
-    .toggle-off {
-      background-color: #FFEBEE;
-      color: #C62828;
+    .toggle-container input[type="checkbox"]:checked::after {
+      transform: translateX(20px);
+    }
+    .toggle-status { font-size: 12px; font-weight: 600; }
+    .toggle-on { color: var(--accent); }
+    .toggle-off { color: var(--text2); }
+
+    /* ── API Key Form ────────────────────────── */
+    .api-key-form-section { margin-bottom: 12px; }
+    .api-key-form-section h3 { font-size: 15px; margin-bottom: 4px; }
+    .api-key-form-section p { font-size: 12px; color: var(--text2); }
+    .api-key-form-section input {
+      width: 100%; padding: 10px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 14px; font-family: var(--font);
+      margin-top: 6px;
+    }
+    .api-key-form-section input:focus {
+      outline: none; border-color: var(--accent);
     }
 
-    @media (max-width: 600px) {
-      .scanner-options {
-        flex-direction: column;
-      }
-      
-      .scanner-option {
-        width: 100%;
-      }
-      
-      .tab {
-        flex: 1 0 auto;
-        text-align: center;
-        padding: 8px 10px;
-        font-size: 0.9em;
-      }
-      
-      .tab-container {
-        justify-content: space-between;
-      }
-      
-      .modal-content {
-        width: 95%;
-        margin: 5% auto;
-      }
-      
-      .recipe-list {
-        grid-template-columns: 1fr;
-      }
-      
-      .recipe-detail-title {
-        font-size: 20px;
-      }
-      
-      .recipe-detail-meta {
-        flex-direction: column;
-        gap: 8px;
-      }
+    /* ── Premium Section ─────────────────────── */
+    .premium-section {
+      background: var(--surface2); border-radius: 12px;
+      padding: 14px; margin-top: 12px; border: 1px solid var(--border);
+    }
+    .premium-section h3 { font-size: 15px; color: var(--accent); margin-bottom: 8px; }
+
+    /* ── Toast Notifications ────────────────── */
+    .toast-container {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; display: flex; flex-direction: column;
+      gap: 8px; pointer-events: none; max-width: 90vw;
+    }
+    .toast {
+      padding: 12px 18px; border-radius: 12px;
+      font-size: 14px; font-weight: 500; font-family: var(--font);
+      color: var(--text); text-align: center;
+      animation: toastIn .3s ease-out, toastOut .3s ease-in forwards;
+      animation-delay: 0s, 2.5s;
+      pointer-events: auto; max-width: 400px;
+    }
+    .toast-info {
+      background: var(--surface); border: 1px solid var(--accent);
+      box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    }
+    .toast-warn {
+      background: rgba(251,191,36,.15); border: 1px solid var(--warn);
+      box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    }
+    .toast-error {
+      background: rgba(248,113,113,.15); border: 1px solid var(--danger);
+      box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    /* ── Font Awesome spinner ────────────────── */
+    .fa-spin { animation: fa-spin 1s linear infinite; }
+    @keyframes fa-spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive tweaks ───────────────────── */
+    @media (max-width: 380px) {
+      .recipe-card { flex-direction: column; }
+      .recipe-image, .recipe-icon-placeholder { width: 100%; height: 140px; }
+      .action-chip { padding: 10px 6px; font-size: 12px; }
+      .camera-viewfinder { min-height: 170px; }
     }
   </style>
-  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Finnish Food Scanner</h1>
+  <div class="app">
+    <!-- Top Bar -->
+    <div class="topbar">
+      <button class="hamburger" id="menu-toggle" aria-label="Menu">☰</button>
+      <span class="logo">⚡ NutriScan</span>
     </div>
-    <div class="content">
-      <div class="section">
-        <h2 class="section-title">Welcome to Food Scanner</h2>
-        <p class="paragraph">
-          This application helps you scan Finnish grocery products to get detailed 
-          information about ingredients, allergens, and recipe suggestions.
-        </p>
-        
-        <div class="upcoming-features">
-          <h3 style="color: #3F51B5; margin-top: 15px;">Upcoming Features</h3>
-          <ul style="list-style-type: none; padding-left: 5px;">
-            <li><i class="fas fa-check-circle" style="color: #4CAF50;"></i> AI-powered image recognition for product identification</li>
-            <li><i class="fas fa-check-circle" style="color: #4CAF50;"></i> Comprehensive E-code database with health information</li>
-            <li><i class="fas fa-check-circle" style="color: #4CAF50;"></i> Real-time allergen detection and warnings</li>
-            <li><i class="fas fa-check-circle" style="color: #4CAF50;"></i> Personalized recipe recommendations</li>
-            <li><i class="fas fa-spinner fa-spin" style="color: #FF9800;"></i> Inventory management system for your kitchen</li>
-            <li><i class="fas fa-spinner fa-spin" style="color: #FF9800;"></i> Shopping list generation based on recipe needs</li>
-            <li><i class="fas fa-spinner fa-spin" style="color: #FF9800;"></i> Meal planning with nutritional breakdown</li>
-            <li><i class="fas fa-spinner fa-spin" style="color: #FF9800;"></i> Premium features: advanced dietary preferences and filters</li>
-            <li><i class="fas fa-spinner fa-spin" style="color: #FF9800;"></i> Cross-platform mobile compatibility</li>
-            <li><i class="fas fa-spinner fa-spin" style="color: #FF9800;"></i> Offline mode with local product database</li>
-          </ul>
-        </div>
-        
-        <p class="paragraph">
-          Choose one of the methods below to identify a product:
-        </p>
-        
-        <div class="scanner-options">
-          <div class="scanner-option" id="camera-option">
-            <i class="fas fa-camera"></i>
-            <div class="scanner-option-title">Camera</div>
-            <div class="scanner-option-desc">Use your device camera to analyze a product</div>
-          </div>
-          
-          <div class="scanner-option" id="upload-option">
-            <i class="fas fa-upload"></i>
-            <div class="scanner-option-title">Upload Image</div>
-            <div class="scanner-option-desc">Upload a product photo from your device</div>
-          </div>
-          
-          <div class="scanner-option" id="barcode-option">
-            <i class="fas fa-barcode"></i>
-            <div class="scanner-option-title">Barcode</div>
-            <div class="scanner-option-desc">Scan or enter a product barcode</div>
-          </div>
-          
-          <div class="scanner-option" id="manual-option">
-            <i class="fas fa-keyboard"></i>
-            <div class="scanner-option-title">Manual Entry</div>
-            <div class="scanner-option-desc">Enter product details manually</div>
-          </div>
-        </div>
-        
-        <!-- Camera Input Container -->
-        <div class="input-container" id="camera-container">
-          <h3>Use Camera</h3>
-          <p>Allow camera access to analyze your product</p>
-          
-          <div class="camera-container">
+
+    <!-- Side Menu Overlay -->
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <!-- Side Menu -->
+    <nav class="side-menu" id="side-menu">
+      <div class="side-menu-header">
+        <span class="logo">⚡ NutriScan</span>
+      </div>
+      <div class="side-menu-nav">
+        <a href="#" id="menu-home"><i class="fas fa-home"></i> Etusivu</a>
+        <hr class="menu-divider">
+        <button id="menu-camera-btn"><i class="fas fa-camera"></i> Kameraskannaus</button>
+        <button id="menu-upload-btn"><i class="fas fa-upload"></i> Lataa kuva</button>
+        <button id="menu-barcode-btn"><i class="fas fa-barcode"></i> Viivakoodihaku</button>
+        <button id="menu-manual-btn"><i class="fas fa-keyboard"></i> Syötä tiedot</button>
+        <hr class="menu-divider">
+        <button id="menu-allergen-bank"><i class="fas fa-shield-alt"></i> Allergeenipankki</button>
+        <button id="menu-recipe-bank"><i class="fas fa-utensils"></i> Reseptipankki</button>
+        <hr class="menu-divider">
+        <a href="#" id="menu-features"><i class="fas fa-star"></i> Ominaisuudet</a>
+        <a href="#" id="menu-about"><i class="fas fa-info-circle"></i> Tietoja</a>
+        <button id="menu-settings-btn"><i class="fas fa-cog"></i> Asetukset</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="hero" id="hero-area">
+      <!-- Dynamic Control Area -->
+      <div class="control-area" id="control-area">
+        <!-- Camera -->
+        <div class="control-content active" id="control-camera">
+          <div class="camera-viewfinder" id="camera-viewfinder">
             <video id="video-preview" autoplay playsinline></video>
-            <img id="captured-image" style="display: none; max-width: 100%; max-height: 300px;">
-            <p id="camera-placeholder">Click the button below to start your camera</p>
-            <button class="btn" id="start-camera"><i class="fas fa-camera"></i> Start Camera</button>
-            <button class="btn" id="capture-image" style="display: none;"><i class="fas fa-camera"></i> Capture</button>
-            <button class="btn btn-secondary" id="retake-image" style="display: none;"><i class="fas fa-redo"></i> Retake</button>
-            <button class="btn" id="analyze-camera-image" style="display: none;"><i class="fas fa-search"></i> Analyze Product</button>
+            <img id="captured-image" alt="Captured">
+            <div class="camera-placeholder" id="camera-placeholder">
+              <i class="fas fa-camera"></i>
+              <p id="camera-placeholder-text">Aloita napauttamalla</p>
+            </div>
+          </div>
+          <div class="ctrl-btns">
+            <button class="btn btn-primary" id="capture-image" style="display:none;"><i class="fas fa-camera"></i> Capture</button>
+            <button class="btn btn-ghost" id="retake-image" style="display:none;"><i class="fas fa-redo"></i> Retake</button>
+            <button class="btn btn-primary" id="analyze-camera-image" style="display:none;"><i class="fas fa-search"></i> Analyze</button>
           </div>
         </div>
-        
-        <!-- Upload Input Container -->
-        <div class="input-container" id="upload-container">
-          <h3>Upload Product Image</h3>
-          <p>Drag and drop a product image or click to browse</p>
-          
+
+        <!-- Upload -->
+        <div class="control-content" id="control-upload">
           <div class="dropzone" id="dropzone">
-            <i class="fas fa-cloud-upload-alt" style="font-size: 32px; color: #3F51B5; margin-bottom: 10px;"></i>
-            <p>Drag & Drop your product image here<br>or click to browse</p>
-            <input type="file" id="file-input" accept="image/*">
-            <img id="image-preview" src="" alt="Preview">
-            <button class="btn" id="analyze-upload" style="display: none;"><i class="fas fa-search"></i> Analyze Product</button>
+            <i class="fas fa-cloud-upload-alt" style="font-size:32px;color:var(--accent);"></i>
+            <p style="margin-top:8px;">Napauta tai pudota kuva tähän</p>
+            <input type="file" id="file-input" accept="image/*" style="display:none;">
+          </div>
+          <img id="image-preview" alt="Preview">
+          <button class="btn btn-primary" id="analyze-upload" style="display:none;width:100%;"><i class="fas fa-search"></i> Analyze Image</button>
+        </div>
+
+        <!-- Barcode -->
+        <div class="control-content" id="control-barcode">
+          <div class="barcode-scan-area" style="border:none;padding:0;background:none;">
+            <div class="quick-scan" style="margin-bottom:10px;">
+              <input type="text" id="barcode-input" placeholder="Syötä viivakoodinumero…" inputmode="numeric" autocomplete="off">
+              <button class="btn btn-primary" id="lookup-barcode">Hae</button>
+            </div>
+            <div style="text-align:center;color:var(--text2);font-size:12px;margin:8px 0;">— tai —</div>
+            <button class="btn btn-ghost" id="scan-barcode" style="width:100%;"><i class="fas fa-camera"></i> Skannaa kameralla</button>
+            <div id="barcode-scanner">
+              <video id="barcode-video" autoplay playsinline></video>
+              <button class="btn btn-ghost" id="close-scanner"><i class="fas fa-times"></i> Close</button>
+            </div>
           </div>
         </div>
-        
-        <!-- Barcode Input Container -->
-        <div class="input-container" id="barcode-container">
-          <h3>Scan or Enter Barcode</h3>
-          <p>You can enter a barcode number directly or scan it with your camera</p>
-          
-          <div class="input-group">
-            <label for="barcode-input">Barcode Number</label>
-            <input type="text" id="barcode-input" placeholder="Enter product barcode (e.g., 6410405103420)">
-          </div>
-          
-          <button class="btn" id="scan-barcode"><i class="fas fa-barcode"></i> Scan Barcode</button>
-          <button class="btn" id="lookup-barcode"><i class="fas fa-search"></i> Look Up Product</button>
-          
-          <div class="camera-container" id="barcode-scanner" style="display: none;">
-            <video id="barcode-video" autoplay playsinline></video>
-            <p>Point camera at a barcode</p>
-            <button class="btn btn-secondary" id="close-scanner"><i class="fas fa-times"></i> Close Scanner</button>
-          </div>
-        </div>
-        
-        <!-- Manual Input Container -->
-        <div class="input-container" id="manual-container">
-          <h3>Enter Product Details</h3>
-          <p>Provide information about your product manually</p>
-          
-          <div class="input-group">
-            <label for="product-barcode">Barcode (Optional)</label>
-            <input type="text" id="product-barcode" placeholder="e.g., 6410405103420">
-            <small>If scanned previously, this will be filled automatically</small>
-          </div>
-          
-          <div class="input-group">
-            <label for="product-name">Product Name</label>
-            <input type="text" id="product-name" placeholder="e.g., Valio Skyr Strawberry Yogurt">
-          </div>
-          
-          <div class="input-group">
-            <label for="product-brand">Brand</label>
-            <input type="text" id="product-brand" placeholder="e.g., Valio">
-          </div>
-          
-          <div class="input-group">
-            <label for="product-ingredients">Ingredients</label>
-            <textarea id="product-ingredients" rows="4" placeholder="List of ingredients separated by commas"></textarea>
-          </div>
-          
-          <button class="btn" id="submit-manual"><i class="fas fa-paper-plane"></i> Submit Information</button>
-        </div>
-        
-        <!-- Loading Indicator -->
-        <div class="loading-indicator" id="loading">
-          <i class="fas fa-spinner fa-spin" style="font-size: 32px;"></i>
-          <p>Analyzing product...</p>
-        </div>
-        
-        <!-- Result Container -->
-        <div class="result-container" id="result">
-          <h3>Product Analysis Results</h3>
-          <div id="product-details"></div>
+
+        <!-- Manual -->
+        <div class="control-content" id="control-manual">
+          <input type="text" id="product-barcode" placeholder="Viivakoodi (valinnainen)">
+          <input type="text" id="product-name" placeholder="Tuotteen nimi">
+          <input type="text" id="product-brand" placeholder="Valmistaja">
+          <textarea id="product-ingredients" placeholder="Ainesosat (pilkuilla erotettuna)"></textarea>
+          <button class="btn btn-primary" id="submit-manual" style="width:100%;"><i class="fas fa-paper-plane"></i> Lähetä</button>
         </div>
       </div>
-      
-      <div class="section">
-        <h2 class="section-title">Key Features</h2>
-        
-        <div class="feature-item">
-          <h3 class="feature-title">🔍 Multiple Recognition Methods</h3>
-          <p class="feature-description">
-            Use camera, upload images, scan barcodes, or enter product details manually
-          </p>
-        </div>
-        
-        <div class="feature-item">
-          <h3 class="feature-title">⚠️ Allergen Warnings</h3>
-          <p class="feature-description">
-            Set up alerts for ingredients you want to avoid with detailed symptom information
-          </p>
-        </div>
-        
-        <div class="feature-item">
-          <h3 class="feature-title">🧪 E-Number Information</h3>
-          <p class="feature-description">
-            Identify food additives and understand their potential health implications
-          </p>
-        </div>
-        
-        <div class="feature-item">
-          <h3 class="feature-title">🍳 Recipe Suggestions</h3>
-          <p class="feature-description">
-            Get recipe ideas based on scanned products
-          </p>
-        </div>
-        
-        <div class="feature-item">
-          <h3 class="feature-title">🧊 Inventory Integration</h3>
-          <p class="feature-description">
-            Connect with your virtual refrigerator and freezer inventory
-          </p>
-        </div>
-        
-        <div class="feature-item">
-          <h3 class="feature-title">🤖 AI-Powered Recognition</h3>
-          <p class="feature-description">
-            Automatic detection of brand, origin, and product details from images
-          </p>
-        </div>
+
+      <!-- Method Selector -->
+      <div class="method-selector">
+        <button class="method-tab active" data-method="camera"><i class="fas fa-camera"></i> Kamera</button>
+        <button class="method-tab" data-method="upload"><i class="fas fa-upload"></i> Lataa</button>
+        <button class="method-tab" data-method="barcode"><i class="fas fa-barcode"></i> Viivakoodi</button>
+        <button class="method-tab" data-method="manual"><i class="fas fa-keyboard"></i> Käsin</button>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="quick-links">
+        <button class="quick-link" id="allergen-bank-quick">
+          <i class="fas fa-shield-alt"></i> Allergeenipankki
+        </button>
+        <button class="quick-link" id="recipe-bank-quick">
+          <i class="fas fa-utensils"></i> Reseptipankki
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-spinner" id="loading">
+        <div class="spinner"></div>
+        <p>Haetaan tuotetta…</p>
+      </div>
+
+      <!-- Result -->
+      <div class="result-panel fade-up" id="result">
+        <div id="product-details"></div>
       </div>
     </div>
-  </div>
+
+    <!-- Allergen Bank Page View -->
+    <div class="page-view" id="page-allergen-bank">
+      <div class="page-view-header">
+        <button class="page-back-btn" onclick="closePageView()"><i class="fas fa-arrow-left"></i></button>
+        <span class="page-view-title">⚠️ Allergeenipankki</span>
+      </div>
+      <div id="allergen-bank-content" style="flex:1;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Recipe Bank Page View -->
+    <div class="page-view" id="page-recipe-bank">
+      <div class="page-view-header">
+        <button class="page-back-btn" onclick="closePageView()"><i class="fas fa-arrow-left"></i></button>
+        <span class="page-view-title">🍳 Reseptipankki</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding-bottom:20px;">
+        <p style="color:var(--text2);font-size:13px;margin-bottom:14px;">
+          Selaa reseptejä useista lähteistä. Syötä tuotteen nimi löytääksesi reseptejä.
+        </p>
+        <div class="quick-scan" style="margin-bottom:14px;">
+          <input type="text" id="recipe-search-input" placeholder="Hae reseptejä…" style="flex:1;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;font-family:var(--font);">
+          <button class="btn btn-primary" id="recipe-search-btn"><i class="fas fa-search"></i> Search</button>
+        </div>
+        <div style="margin-bottom:14px;">
+          <h4 style="font-size:13px;color:var(--text2);margin-bottom:6px;">Saatavilla olevat lähteet</h4>
+          <div class="tag-row">
+            <span class="tag tag-ecode">Local DB</span>
+            <span class="tag tag-ecode">Spoonacular</span>
+            <span class="tag tag-ecode">K-Ruoka</span>
+            <span class="tag tag-ecode">Pirkka</span>
+            <span class="tag tag-ecode">Valio</span>
+            <span class="tag tag-ecode">Edamam</span>
+          </div>
+        </div>
+        <div id="recipe-bank-results"></div>
+      </div>
+    </div>
+  </div><!-- end .app -->
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
 
   <!-- Recipe Modal -->
-  <div id="recipe-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Recipe Suggestions</h2>
-        <span class="close-modal">&times;</span>
-      </div>
-      
-      <!-- Recipe filters -->
-      <div class="recipe-filters" id="recipe-filters" style="padding: 15px; background-color: #f5f5f5; margin-bottom: 15px; border-bottom: 1px solid #e0e0e0; display: none;">
-        <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 16px;">
-          <i class="fas fa-filter" style="margin-right: 8px;"></i> Filter Recipes
-        </h3>
-        
-        <div style="margin-bottom: 15px;">
-          <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px;">Active Filters:</h4>
-          <div id="active-filters" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 35px;"></div>
+  <div class="modal" id="recipe-modal">
+    <div class="modal-box">
+      <button class="close-btn" onclick="document.getElementById('recipe-modal').classList.remove('open')">&times;</button>
+      <h2>🍳 Recipe Suggestions</h2>
+      <!-- Filter Toggle -->
+      <button class="btn btn-ghost" id="toggle-filters-btn" style="width:100%;margin-bottom:8px;">
+        <i class="fas fa-filter"></i> Filter Options
+      </button>
+      <!-- Filter Panel -->
+      <div id="recipe-filters" style="display:none;margin-bottom:12px;">
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+          <span class="filter-tag" data-filter="vegetarian"><i class="fas fa-leaf"></i> Vegetarian</span>
+          <span class="filter-tag" data-filter="vegan"><i class="fas fa-seedling"></i> Vegan</span>
+          <span class="filter-tag" data-filter="glutenFree"><i class="fas fa-wheat-awn-slash"></i> Gluten Free</span>
+          <span class="filter-tag" data-filter="dairyFree"><i class="fas fa-prescription-bottle"></i> Dairy Free</span>
+          <span class="filter-tag" data-filter="lowSugar"><i class="fas fa-cubes-stacked"></i> Low Sugar</span>
+          <span class="filter-tag" data-filter="nutFree"><i class="fas fa-ban"></i> Nut Free</span>
         </div>
-        
-        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-          <!-- Dietary preferences -->
-          <div style="flex: 1; min-width: 200px;">
-            <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Dietary Preferences</h4>
-            <div class="filter-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <span class="filter-tag" data-filter="vegetarian" style="background-color: #4CAF50; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
-                <i class="fas fa-leaf"></i> Vegetarian
-              </span>
-              <span class="filter-tag" data-filter="vegan" style="background-color: #8BC34A; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
-                <i class="fas fa-seedling"></i> Vegan
-              </span>
-              <span class="filter-tag" data-filter="glutenFree" style="background-color: #FF9800; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
-                <i class="fas fa-wheat-awn-slash"></i> Gluten Free
-              </span>
-            </div>
-          </div>
-          
-          <!-- Ingredient constraints -->
-          <div style="flex: 1; min-width: 200px;">
-            <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Ingredients</h4>
-            <div class="filter-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <span class="filter-tag" data-filter="dairyFree" style="background-color: #03A9F4; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
-                <i class="fas fa-prescription-bottle"></i> Dairy Free
-              </span>
-              <span class="filter-tag" data-filter="lowSugar" style="background-color: #E91E63; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
-                <i class="fas fa-cubes-stacked"></i> Low Sugar
-              </span>
-              <span class="filter-tag" data-filter="nutFree" style="background-color: #9C27B0; color: white; padding: 5px 10px; border-radius: 15px; font-size: 12px; cursor: pointer; user-select: none;">
-                <i class="fas fa-ban"></i> Nut Free
-              </span>
-            </div>
-          </div>
+        <div id="active-filters" style="margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="add-ingredient-filter" class="ingredient-input" placeholder="Add ingredient filter…" style="flex:1;">
+          <button class="btn btn-primary btn-small" id="add-ingredient-btn">Add</button>
+          <button class="btn btn-ghost btn-small" id="clear-filters-btn">Clear All</button>
         </div>
-        
-        <div style="margin-top: 20px;">
-          <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 14px;">Additional Options</h4>
-          <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-            <div>
-              <label for="max-ingredients" style="margin-right: 10px;">Max Ingredients:</label>
-              <select id="max-ingredients" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
-                <option value="0">Any</option>
-                <option value="5">5 or less</option>
-                <option value="10">10 or less</option>
-                <option value="15">15 or less</option>
-              </select>
-            </div>
-            
-            <div style="flex-grow: 1;">
-              <input type="text" id="add-ingredient-filter" placeholder="Add ingredient to search for..." 
-                     style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
-            </div>
-            
-            <button class="btn" id="add-ingredient-btn" style="background-color: #4CAF50;">
-              <i class="fas fa-plus"></i> Add
-            </button>
-          </div>
-        </div>
-        
-        <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-          <button class="btn" id="clear-filters-btn" style="background-color: #9E9E9E;">
-            <i class="fas fa-trash"></i> Clear Filters
-          </button>
-          <button class="btn" id="apply-filters-btn" style="background-color: #3F51B5;">
-            <i class="fas fa-check"></i> Apply Filters
-          </button>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+          <label style="font-size:13px;color:var(--text2);">Max ingredients:</label>
+          <select id="max-ingredients" style="padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font);">
+            <option value="0">Any</option>
+            <option value="5">≤ 5</option>
+            <option value="7">≤ 7</option>
+            <option value="10">≤ 10</option>
+          </select>
+          <button class="btn btn-primary btn-small" id="apply-filters-btn">Apply</button>
         </div>
       </div>
-      
-      <div class="modal-body" id="recipe-content">
-        <!-- Recipe content will be inserted here -->
-      </div>
-      
-      <div class="modal-footer">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <button class="btn" id="toggle-filters-btn" style="background-color: #9E9E9E;">
-            <i class="fas fa-filter"></i> Filter Options
-          </button>
-          
-          <div class="recipe-provider-selector">
-            <label for="recipe-provider">Recipe Source:</label>
-            <select id="recipe-provider">
-              <option value="local">Local Database</option>
-              <option value="spoonacular">Spoonacular</option>
-              <option value="kRuoka">K-Ruoka</option>
-              <option value="valio">Valio</option>
-              <option value="pirkka">Pirkka</option>
-              <option value="edamam">Edamam</option>
-            </select>
-          </div>
-          <button class="btn" id="recipe-api-key-button">Set API Key</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- API Key Modal -->
-  <div id="api-key-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Set API Key</h2>
-        <span class="close-modal">&times;</span>
-      </div>
-      <div class="modal-body">
-        <div id="api-key-form">
-          <!-- Premium User Section -->
-          <div class="premium-user-section" style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-            <h3 style="display: flex; align-items: center;">
-              <i class="fas fa-crown" style="color: gold; margin-right: 10px;"></i> Premium User
-            </h3>
-            <p>Unlock additional recipe sources and features with a premium subscription.</p>
-            
-            <div class="toggle-container">
-              <label class="toggle-switch">
-                <input type="checkbox" id="premium-user-toggle">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">Enable Premium Features</span>
-              <span class="toggle-status toggle-off">Disabled</span>
-            </div>
-            
-            <div id="premium-features" style="background-color: #f7f7f7; padding: 15px; border-radius: 8px; margin-top: 10px; display: none;">
-              <h4>Premium Recipe Sources</h4>
-              <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                <div style="flex: 1; min-width: 200px;">
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-k-ruoka" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">K-Ruoka Recipes</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-pirkka" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Pirkka Recipes</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-valio" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Valio Recipes</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-edamam" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Edamam Recipes</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                </div>
-              </div>
-              
-              <h4 style="margin-top: 15px;">Premium Features</h4>
-              <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                <div style="flex: 1; min-width: 200px;">
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-nutritional-analysis" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Advanced Nutritional Analysis</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-meal-planning" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Meal Planning</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-custom-sources" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Custom Recipe Sources</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                  <div class="toggle-container">
-                    <label class="toggle-switch">
-                      <input type="checkbox" id="enable-unlimited-storage" checked>
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">Unlimited Storage</span>
-                    <span class="toggle-status toggle-on">Enabled</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <button class="btn" id="premium-upgrade-btn" style="margin-top: 15px; background-color: #9c27b0; display: inline-block;">
-              <i class="fas fa-crown"></i> Upgrade to Premium
-            </button>
-          </div>
-          
-          <!-- API Key Sections -->
-          <div id="spoonacular-key-form" class="api-key-form-section">
-            <h3>Spoonacular API</h3>
-            <p>Get your free API key from <a href="https://spoonacular.com/food-api" target="_blank">Spoonacular</a></p>
-            <div class="form-group">
-              <label for="spoonacular-key">API Key:</label>
-              <input type="text" id="spoonacular-key" placeholder="Enter Spoonacular API key">
-            </div>
-          </div>
-          
-          <div id="edamam-key-form" class="api-key-form-section">
-            <h3>Edamam API</h3>
-            <p>Get your free API key from <a href="https://developer.edamam.com/edamam-recipe-api" target="_blank">Edamam</a></p>
-            <div class="form-group">
-              <label for="edamam-app-id">Application ID:</label>
-              <input type="text" id="edamam-app-id" placeholder="Enter Edamam App ID">
-            </div>
-            <div class="form-group">
-              <label for="edamam-app-key">Application Key:</label>
-              <input type="text" id="edamam-app-key" placeholder="Enter Edamam App Key">
-            </div>
-          </div>
-          
-          <div id="custom-api-section" style="display: none;" class="api-key-form-section">
-            <h3>Custom Recipe API</h3>
-            <p>For premium users: Add your own custom recipe API</p>
-            <div class="form-group">
-              <label for="custom-api-name">API Name:</label>
-              <input type="text" id="custom-api-name" placeholder="Enter API Name">
-            </div>
-            <div class="form-group">
-              <label for="custom-api-url">API URL:</label>
-              <input type="text" id="custom-api-url" placeholder="Enter API URL">
-            </div>
-            <div class="form-group">
-              <label for="custom-api-key">API Key:</label>
-              <input type="text" id="custom-api-key" placeholder="Enter API Key">
-            </div>
-            <button class="btn" id="add-custom-api-btn" style="background-color: #4CAF50;">
-              <i class="fas fa-plus"></i> Add Custom API
-            </button>
-          </div>
-          
-          <button class="btn" id="save-api-key-button">Save Settings</button>
-        </div>
-      </div>
+      <div id="recipe-content"></div>
     </div>
   </div>
 
-  <!-- Import allergen and E-code databases -->
+  <!-- API Key Modal -->
+  <div class="modal" id="api-key-modal">
+    <div class="modal-box">
+      <button class="close-btn" onclick="document.getElementById('api-key-modal').classList.remove('open')">&times;</button>
+      <h2>⚙️ Settings</h2>
+      <div id="api-key-form">
+        <!-- Recipe Provider -->
+        <div class="api-key-form-section">
+          <h3>Recipe Source</h3>
+          <select id="recipe-provider" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:var(--font);margin-top:6px;">
+            <option value="local">Local Database</option>
+          </select>
+        </div>
+        <!-- API Keys -->
+        <div class="api-key-form-section" style="margin-top:16px;">
+          <h3>Spoonacular</h3>
+          <p>Get key from <a href="https://spoonacular.com/food-api" target="_blank" style="color:var(--accent)">Spoonacular</a></p>
+          <input type="text" id="spoonacular-key" placeholder="API Key">
+        </div>
+        <div class="api-key-form-section" style="margin-top:16px;">
+          <h3>Edamam</h3>
+          <p>Get key from <a href="https://developer.edamam.com/edamam-recipe-api" target="_blank" style="color:var(--accent)">Edamam</a></p>
+          <input type="text" id="edamam-app-id" placeholder="App ID">
+          <input type="text" id="edamam-app-key" placeholder="App Key">
+        </div>
+        <!-- Premium Section -->
+        <div class="premium-section">
+          <h3>👑 Premium Features</h3>
+          <div class="toggle-container">
+            <span style="font-size:14px;">Enable Premium</span>
+            <input type="checkbox" id="premium-user-toggle">
+          </div>
+          <div id="premium-features" style="display:none;">
+            <div class="toggle-container">
+              <span style="font-size:13px;">K-Ruoka recipes</span>
+              <input type="checkbox" id="enable-k-ruoka" checked>
+            </div>
+            <div class="toggle-container">
+              <span style="font-size:13px;">Pirkka recipes</span>
+              <input type="checkbox" id="enable-pirkka" checked>
+            </div>
+            <div class="toggle-container">
+              <span style="font-size:13px;">Valio recipes</span>
+              <input type="checkbox" id="enable-valio" checked>
+            </div>
+            <div class="toggle-container">
+              <span style="font-size:13px;">Edamam recipes</span>
+              <input type="checkbox" id="enable-edamam" checked>
+            </div>
+          </div>
+          <div id="custom-api-section" style="display:none;margin-top:12px;">
+            <h3 style="font-size:14px;">Custom API</h3>
+            <input type="text" id="custom-api-name" placeholder="API Name" style="margin-top:6px;width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font);">
+            <input type="text" id="custom-api-url" placeholder="API URL" style="margin-top:6px;width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font);">
+            <input type="text" id="custom-api-key" placeholder="API Key" style="margin-top:6px;width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--font);">
+            <button class="btn btn-primary" id="add-custom-api-btn" style="margin-top:8px;width:100%;">Add Custom API</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="save-api-key-button" style="width:100%;margin-top:16px;">💾 Save Settings</button>
+      </div>
+    </div>
+  </div>
   <script type="module">
     import { allergenDatabase } from './js/allergenDatabase.js';
     import { eCodeDatabase, getECodeInfo, extractECodesFromText, categorizeECodesByRisk } from './js/eCodeDatabase.js';
     import { localProductDB } from './js/localProductDatabase.js';
     import { RecipeAdapter } from './js/recipeAdapter.js';
+    import './js/i18n.js';
     
     // Make them available globally
     window.allergenDatabase = allergenDatabase;
@@ -1497,10 +1114,392 @@
   </script>
 
   <script>
+    // ── Toast Notification System ──────────────────────────
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ── Hamburger Menu ──────────────────────────────────────
+    const menuToggle = document.getElementById('menu-toggle');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const sideMenu = document.getElementById('side-menu');
+
+    function openMenu() {
+      sideMenu.classList.add('open');
+      menuOverlay.classList.add('open');
+    }
+    function closeMenu() {
+      sideMenu.classList.remove('open');
+      menuOverlay.classList.remove('open');
+    }
+
+    if (menuToggle) menuToggle.addEventListener('click', openMenu);
+    if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
+
+    // Close menu when a nav link is clicked
+    sideMenu.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('click', () => {
+        closeMenu();
+      });
+    });
+
+    // Wire side menu Home
+    document.getElementById('menu-home')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      showHomePage();
+    });
+
+    // Wire side menu scan buttons → switch to respective method tab
+    document.getElementById('menu-camera-btn')?.addEventListener('click', () => {
+      switchMethod('camera');
+      document.getElementById('camera-placeholder')?.click();
+    });
+    document.getElementById('menu-upload-btn')?.addEventListener('click', () => switchMethod('upload'));
+    document.getElementById('menu-barcode-btn')?.addEventListener('click', () => switchMethod('barcode'));
+    document.getElementById('menu-manual-btn')?.addEventListener('click', () => switchMethod('manual'));
+
+    // ── Method Selector ────────────────────────────────────
+    function switchMethod(method) {
+      document.querySelectorAll('.method-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.method === method);
+      });
+      document.querySelectorAll('.control-content').forEach(content => {
+        content.classList.toggle('active', content.id === 'control-' + method);
+      });
+      resultContainer.classList.remove('visible');
+      document.getElementById('control-area')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('.method-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchMethod(tab.dataset.method));
+    });
+
+    function showHomePage() {
+      document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+      document.getElementById('hero-area').style.display = '';
+      switchMethod('camera');
+      resultContainer.classList.remove('visible');
+      document.querySelectorAll('.not-found-container').forEach(el => el.remove());
+      // Also clear camera state
+      const stream = window._cameraStream;
+      if (stream) { stream.getTracks().forEach(t => t.stop()); window._cameraStream = null; }
+      document.getElementById('video-preview').style.display = 'none';
+      document.getElementById('captured-image').style.display = 'none';
+      document.getElementById('camera-placeholder').style.display = '';
+      document.getElementById('camera-placeholder').style.display = '';
+      document.getElementById('capture-image').style.display = 'none';
+      document.getElementById('retake-image').style.display = 'none';
+      document.getElementById('analyze-camera-image').style.display = 'none';
+    }
+
+    // Wire side menu features/about
+    document.getElementById('menu-features')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      showFeaturesInfo();
+    });
+    document.getElementById('menu-about')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      showToast('NutriScan — Välitön elintarvikeskanneri. Open Food Facts -tietokanta. Ei API-avaimia.', 'info');
+    });
+
+    // Allergen Bank — full page view with allergens + E-codes
+    function showAllergenBank() {
+      document.getElementById('hero-area').style.display = 'none';
+      const page = document.getElementById('page-allergen-bank');
+      page.classList.add('active');
+      
+      const content = document.getElementById('allergen-bank-content');
+      if (content && !content.dataset.loaded) {
+        let html = '<div style="margin-bottom:16px;"><h3 style="color:var(--danger);margin-bottom:4px;">⚠️ Allergens (' + Object.keys(window.allergenDatabase||{}).length + ')</h3></div>';
+        
+        if (window.allergenDatabase) {
+          const allergens = Object.entries(window.allergenDatabase);
+          allergens.forEach(([key, a]) => {
+            const symptoms = [];
+            if (a.symptoms?.mild) symptoms.push(...a.symptoms.mild.map(s => `<span class="severity-mild">${s}</span>`));
+            if (a.symptoms?.moderate) symptoms.push(...a.symptoms.moderate.map(s => `<span class="severity-moderate">${s}</span>`));
+            if (a.symptoms?.severe) symptoms.push(...a.symptoms.severe.map(s => `<span class="severity-severe">${s}</span>`));
+            if (a.symptoms?.common) symptoms.push(...a.symptoms.common.map(s => `<span>${s}</span>`));
+            
+            html += `
+              <div class="allergen-details">
+                <h4>⚠️ ${a.name}</h4>
+                <p style="font-size:13px;color:var(--text2);margin-bottom:4px;">${a.description}</p>
+                ${a.onsetTime ? `<p style="font-size:12px;color:var(--text2);">🕐 ${a.onsetTime}</p>` : ''}
+                ${symptoms.length ? `<div style="margin-top:6px;font-size:12px;display:flex;flex-wrap:wrap;gap:4px;">${symptoms.join(' ')}</div>` : ''}
+                ${a.commonIn ? `<div class="common-in"><strong>Found in:</strong><br>${a.commonIn.map(i => `<span>${i}</span>`).join(' ')}</div>` : ''}
+              </div>`;
+          });
+        }
+        
+        // Add E-codes section
+        html += '<div style="margin-top:20px;margin-bottom:16px;padding-top:16px;border-top:1px solid var(--border);"><h3 style="color:var(--accent);margin-bottom:4px;">🧪 E-Numbers (' + Object.keys(window.eCodeDatabase||{}).length + ')</h3></div>';
+        
+        if (window.eCodeDatabase) {
+          // Group by risk
+          const highRisk = [], medRisk = [], lowRisk = [];
+          Object.entries(window.eCodeDatabase).forEach(([code, e]) => {
+            const issues = (e.potentialIssues || []).join(' ').toLowerCase();
+            if (issues.includes('allerg') || issues.includes('carcinogen') || issues.includes('toxic') || issues.includes('hyperactivity')) {
+              highRisk.push({ code, ...e });
+            } else if (issues.includes('may cause') || issues.includes('sensitivity') || issues.includes('reaction')) {
+              medRisk.push({ code, ...e });
+            } else {
+              lowRisk.push({ code, ...e });
+            }
+          });
+          
+          const renderECode = (e, riskClass) => `
+            <div class="e-code-details" style="padding:10px;">
+              <h4>${e.code}: ${e.name} <span class="risk-level ${riskClass}">${riskClass === 'risk-high' ? '⚠️ High' : riskClass === 'risk-moderate' ? 'Medium' : '✓ Safe'}</span></h4>
+              <p style="font-size:12px;color:var(--text2);">${e.category} · ${e.origin} · ${e.function}</p>
+              ${e.commonIn ? `<div style="font-size:11px;color:var(--text2);margin-top:4px;">Found in: ${e.commonIn.slice(0,3).join(', ')}</div>` : ''}
+            </div>`;
+          
+          if (highRisk.length) {
+            html += '<h4 style="font-size:13px;color:var(--danger);margin:8px 0;">⚠️ High Risk</h4>';
+            html += highRisk.map(e => renderECode(e, 'risk-high')).join('');
+          }
+          if (medRisk.length) {
+            html += '<h4 style="font-size:13px;color:var(--warn);margin:8px 0;">Moderate Risk</h4>';
+            html += medRisk.map(e => renderECode(e, 'risk-moderate')).join('');
+          }
+          if (lowRisk.length) {
+            html += '<h4 style="font-size:13px;color:var(--accent);margin:8px 0;">✓ Generally Safe</h4>';
+            html += lowRisk.map(e => renderECode(e, 'risk-low')).join('');
+          }
+        }
+        
+        content.innerHTML = html || '<p style="color:var(--text2);">Database loading…</p>';
+        content.dataset.loaded = '1';
+      }
+    }
+
+    // Recipe Bank — full page view with quick picks
+    function showRecipeBank() {
+      document.getElementById('hero-area').style.display = 'none';
+      const page = document.getElementById('page-recipe-bank');
+      page.classList.add('active');
+      
+      // Load quick picks from local DB
+      const resultsDiv = document.getElementById('recipe-bank-results');
+      if (resultsDiv && !resultsDiv.dataset.loaded) {
+        resultsDiv.dataset.loaded = '1';
+        if (window.recipeAdapter) {
+          window.recipeAdapter.getRecipesForProduct({ name: '', ingredients: '' }).then(recipes => {
+            if (recipes.length > 0) {
+              resultsDiv.innerHTML = '<h4 style="font-size:13px;color:var(--text2);margin-bottom:8px;">📌 Pikavalinnat</h4>' + 
+                recipes.slice(0, 4).map(r => `
+                  <div class="recipe-card" style="margin-bottom:8px;" onclick="window.showRecipeForBank('${r.id}','${r.provider}')">
+                    <div class="recipe-icon-placeholder"><i class="fas fa-utensils"></i></div>
+                    <div class="recipe-details">
+                      <span class="recipe-provider-badge">${r.provider}</span>
+                      <div class="recipe-title">${r.title}</div>
+                      <div class="recipe-info">${r.prepTime||''} ${r.servings?'· '+r.servings+' servings':''}</div>
+                    </div>
+                  </div>
+                `).join('') + '<div style="margin:12px 0;border-top:1px solid var(--border);"></div>';
+            }
+          }).catch(() => {});
+        }
+      }
+      
+      // Wire recipe search if not already
+      setTimeout(() => {
+        const searchBtn = document.getElementById('recipe-search-btn');
+        const searchInput = document.getElementById('recipe-search-input');
+        if (searchBtn && !searchBtn.dataset.wired) {
+          searchBtn.dataset.wired = '1';
+          searchBtn.addEventListener('click', () => {
+            const query = searchInput?.value?.trim();
+            if (!query) return;
+            const resultsDiv = document.getElementById('recipe-bank-results');
+            if (resultsDiv) resultsDiv.innerHTML = '<div class="spinner" style="margin:20px auto;"></div>';
+            if (window.recipeAdapter) {
+              window.recipeAdapter.getRecipesForProduct({ name: query, ingredients: query }).then(recipes => {
+                if (resultsDiv) {
+                  if (recipes.length > 0) {
+                    resultsDiv.innerHTML = recipes.map(r => `
+                      <div class="recipe-card" style="margin-bottom:8px;" onclick="window.showRecipeForBank('${r.id}','${r.provider}')">
+                        <div class="recipe-icon-placeholder"><i class="fas fa-utensils"></i></div>
+                        <div class="recipe-details">
+                          <span class="recipe-provider-badge">${r.provider}</span>
+                          <div class="recipe-title">${r.title}</div>
+                          <div class="recipe-info">${r.prepTime||''} ${r.servings?'· '+r.servings+' servings':''}</div>
+                        </div>
+                      </div>`).join('');
+                  } else {
+                    resultsDiv.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">Reseptejä ei löytynyt.</p>';
+                  }
+                }
+              }).catch(() => {
+                if (resultsDiv) resultsDiv.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">Aseta API-avaimet asetuksissa.</p>';
+              });
+            }
+          });
+          searchInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchBtn.click();
+          });
+        }
+      }, 100);
+    }
+
+    function closePageView() {
+      document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+      document.getElementById('hero-area').style.display = '';
+    }
+
+    // Global recipe detail viewer with allergen warnings + substitute popup
+    window.showRecipeForBank = function(recipeId, provider) {
+      if (window.recipeAdapter) {
+        window.recipeAdapter.getRecipeById(recipeId, provider).then(recipe => {
+          if (recipe) {
+            const ingredientRows = recipe.ingredients.map(ing => {
+              const allergens = window.checkIngredientForAllergens ? window.checkIngredientForAllergens(ing) : [];
+              const alt = window.findIngredientAlternatives ? window.findIngredientAlternatives(ing) : [];
+              const hasAllergen = allergens.length > 0 && !alt[0]?.startsWith('Sorry');
+              return { name: ing, allergens, hasAllergen, alternatives: hasAllergen ? alt : [] };
+            });
+            const anyAllergens = ingredientRows.some(r => r.hasAllergen);
+            
+            const modal = document.getElementById('recipe-modal');
+            document.getElementById('recipe-content').innerHTML = `
+              <h3>${recipe.title}</h3>
+              ${anyAllergens ? '<div style="background:rgba(248,113,113,.15);border:1px solid var(--danger);border-radius:10px;padding:10px;margin:10px 0;font-size:13px;">⚠️ Tämä resepti sisältää allergeeneja. Klikkaa ⚠️-kuvaketta nähdäksesi korvaavat vaihtoehdot.</div>' : ''}
+              <p style="margin-top:10px;"><strong>Ainesosat:</strong></p>
+              <ul style="list-style:none;padding:0;">
+                ${ingredientRows.map(r => `
+                  <li style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+                    <span style="flex:1;">${r.name}</span>
+                    ${r.hasAllergen ? `<span class="allergen-warning" title="Sisältää: ${r.allergens.join(', ')}" style="cursor:pointer;" onclick="window._showSub('${r.name}','${r.alternatives.join('|')}')">⚠️</span>` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+              ${recipe.instructions ? '<p style="margin-top:10px;"><strong>Valmistusohjeet:</strong></p><ol style="padding-left:20px;">' + recipe.instructions.map(s => '<li style="margin-bottom:6px;">' + s + '</li>').join('') + '</ol>' : ''}
+              ${recipe.carbs ? `<p style="margin-top:8px;font-size:12px;color:var(--text2);">Hiilihydraatit: ${recipe.carbs} | Proteiini: ${recipe.protein} | Rasva: ${recipe.fat}</p>` : ''}
+            `;
+            if (modal) modal.classList.add('open');
+          }
+        });
+      }
+    };
+
+    // Substitute popup
+    window._showSub = function(ingredient, altsStr) {
+      const alts = altsStr ? altsStr.split('|') : [];
+      const content = document.getElementById('recipe-content');
+      content.innerHTML = `
+        <h3>🔄 Korvaa ainesosa</h3>
+        <p style="margin:10px 0;">Ainesosa <strong>${ingredient}</strong> voi sisältää allergeeneja.</p>
+        <p style="color:var(--accent);font-weight:600;">Suositellut korvaavat vaihtoehdot:</p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin:10px 0;">
+          ${alts.map(alt => `<button class="btn btn-ghost" style="text-align:left;" onclick="window._applySub('${ingredient}','${alt}')"><i class="fas fa-exchange-alt" style="color:var(--accent);"></i> ${alt}</button>`).join('')}
+          ${alts.length === 0 ? '<p style="color:var(--text2);">Ei korvaavia ehdotuksia tälle ainesosalle.</p>' : ''}
+        </div>
+        <button class="btn btn-ghost" style="width:100%;margin-top:8px;" onclick="document.getElementById('recipe-modal').classList.remove('open')"><i class="fas fa-times"></i> Sulje</button>
+      `;
+    };
+
+    window._applySub = function(oldIng, newIng) {
+      const content = document.getElementById('recipe-content');
+      const text = content.innerHTML;
+      const escaped = oldIng.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      content.innerHTML = text.replace(new RegExp(escaped, 'g'), '<span style="text-decoration:line-through;color:var(--text2);">' + oldIng + '</span> <span style="color:var(--accent);font-weight:600;">→ ' + newIng + '</span>');
+      showToast('Ainesosa korvattu: ' + oldIng + ' → ' + newIng, 'info');
+    };
+
+    // Wire side menu allergen/recipe bank
+    document.getElementById('menu-allergen-bank')?.addEventListener('click', () => {
+      showAllergenBank();
+    });
+    document.getElementById('menu-recipe-bank')?.addEventListener('click', () => {
+      showRecipeBank();
+    });
+
+    // Wire quick-link buttons
+    document.getElementById('allergen-bank-quick')?.addEventListener('click', () => showAllergenBank());
+    document.getElementById('recipe-bank-quick')?.addEventListener('click', () => showRecipeBank());
+
+    // Settings button opens API key modal
+    document.getElementById('menu-settings-btn')?.addEventListener('click', () => {
+      const apiKeyModal = document.getElementById('api-key-modal');
+      if (apiKeyModal) apiKeyModal.classList.add('open');
+    });
+
+    function showFeaturesInfo() {
+      // Build allergen list from database
+      let allergenListHtml = '';
+      if (window.allergenDatabase) {
+        const allergens = Object.entries(window.allergenDatabase).slice(0, 8);
+        allergenListHtml = allergens.map(([key, a]) => 
+          `<span class="tag tag-allergen" style="cursor:pointer;" title="${a.description}">⚠️ ${a.name}</span>`
+        ).join(' ');
+      }
+
+      // Build E-code category summary
+      let ecodeSummary = '';
+      if (window.eCodeDatabase) {
+        const categories = {};
+        Object.values(window.eCodeDatabase).forEach(e => {
+          categories[e.category] = (categories[e.category] || 0) + 1;
+        });
+        ecodeSummary = Object.entries(categories).map(([cat, count]) =>
+          `<span class="tag tag-ecode">${cat}: ${count}</span>`
+        ).join(' ');
+      }
+
+      // Build ingredient scanning info
+      const ingredientInfo = window.checkIngredientForAllergens 
+        ? '<div style="font-size:13px;color:var(--text2);margin-top:4px;">Type or scan any product ingredient — we check against 14+ major allergen groups with symptom details, cross-reactivity info, and Finnish/English language support.</div>'
+        : '';
+
+      const html = `
+        <div style="padding:16px;color:var(--text)">
+          <h3 style="color:var(--accent);margin-bottom:12px">✨ Features</h3>
+          
+          <div style="margin-bottom:14px;">
+            <h4 style="font-size:14px;color:var(--text);margin-bottom:6px;">🔍 Scan Methods</h4>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text2);">
+              <div>📷 Camera — snap a product to identify it</div>
+              <div>📤 Upload — pick an image from your gallery</div>
+              <div>📱 Barcode — scan or type a barcode number</div>
+              <div>⌨️ Manual — enter product details yourself</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <h4 style="font-size:14px;color:var(--danger);margin-bottom:6px;">⚠️ Allergen Detection</h4>
+            <div class="tag-row">${allergenListHtml || 'Loading allergen database…'}</div>
+            ${ingredientInfo}
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <h4 style="font-size:14px;color:var(--accent);margin-bottom:6px;">🧪 E-Numbers Tracked</h4>
+            <div class="tag-row">${ecodeSummary || 'Loading E-code database…'}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;">Each E-number includes category, origin, function, risk level, and potential health concerns.</div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <h4 style="font-size:14px;color:var(--text);margin-bottom:6px;">🍳 Recipe Suggestions</h4>
+            <div style="font-size:13px;color:var(--text2);">Get recipe ideas based on scanned products. Supports multiple sources: local database, Spoonacular, K-Ruoka, Pirkka, Valio, and Edamam.</div>
+          </div>
+
+          <div style="font-size:12px;color:var(--text2);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            🌐 Powered by <strong>Open Food Facts</strong> — 4M+ products, no API key required.<br>
+            📱 Mobile-first design — add to home screen for app-like experience.
+          </div>
+        </div>`;
+      resultContainer.innerHTML = html;
+      resultContainer.classList.add('visible');
+    }
+
     // DOM elements
-    const optionButtons = document.querySelectorAll('.scanner-option');
-    const inputContainers = document.querySelectorAll('.input-container');
-    const startCameraBtn = document.getElementById('start-camera');
     const captureBtn = document.getElementById('capture-image');
     const retakeBtn = document.getElementById('retake-image');
     const analyzeCameraBtn = document.getElementById('analyze-camera-image');
@@ -1524,79 +1523,33 @@
     
     let stream = null;
     
-    // Helper functions
+    // Helper — redirect to method selector
     function resetActiveSections() {
-      inputContainers.forEach(container => {
-        container.style.display = 'none';
-      });
+      // No-op: method selector handles this now
     }
-    
-    // Function to activate a specific tab
     function activateTab(tabId) {
-      // Hide all containers
-      inputContainers.forEach(container => {
-        container.style.display = 'none';
-      });
-      
-      // Show selected container
-      const selectedContainer = document.getElementById(tabId + '-container');
-      if (selectedContainer) {
-        selectedContainer.style.display = 'block';
-      }
-      
-      // Update button states
-      optionButtons.forEach(button => {
-        button.classList.remove('active');
-        if (button.getAttribute('data-target') === tabId) {
-          button.classList.add('active');
-        }
-      });
+      // Map old tab IDs to method selector
+      const map = { 'upload': 'upload', 'barcode': 'barcode', 'manual-entry': 'manual' };
+      const method = map[tabId] || 'camera';
+      switchMethod(method);
     }
+    // Keep reference to camera stream globally for cleanup
+    window._cameraStream = null;
     
-    // Event Listeners for option buttons
-    optionButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const optionId = button.id;
-        
-        // Update active button
-        optionButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        
-        // Hide all containers
-        resetActiveSections();
-        
-        // Show the corresponding container
-        switch(optionId) {
-          case 'camera-option':
-            document.getElementById('camera-container').style.display = 'block';
-            break;
-          case 'upload-option':
-            document.getElementById('upload-container').style.display = 'block';
-            break;
-          case 'barcode-option':
-            document.getElementById('barcode-container').style.display = 'block';
-            break;
-          case 'manual-option':
-            document.getElementById('manual-container').style.display = 'block';
-            break;
-        }
-      });
-    });
-    
-    // Camera functionality
-    startCameraBtn.addEventListener('click', async () => {
+    // Camera — placeholder click starts camera
+    document.getElementById('camera-placeholder')?.addEventListener('click', async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: 'environment' } 
         });
         videoPreview.srcObject = stream;
+        window._cameraStream = stream;
         videoPreview.style.display = 'block';
         cameraPlaceholder.style.display = 'none';
-        startCameraBtn.style.display = 'none';
         captureBtn.style.display = 'inline-block';
       } catch (err) {
         console.error('Error accessing camera:', err);
-        alert('Could not access camera. Please ensure you have granted camera permissions.');
+        showToast('Kameraa ei voitu käyttää. Tarkista käyttöoikeudet.', 'error');
       }
     });
     
@@ -1619,6 +1572,7 @@
       // Stop camera stream
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
+        window._cameraStream = null;
       }
     });
     
@@ -1636,7 +1590,7 @@
         captureBtn.style.display = 'inline-block';
       } catch (err) {
         console.error('Error accessing camera:', err);
-        startCameraBtn.style.display = 'inline-block';
+        cameraPlaceholder.style.display = '';
       }
     });
     
@@ -1651,19 +1605,19 @@
     
     dropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropzone.style.borderColor = '#3F51B5';
-      dropzone.style.backgroundColor = '#E8EAF6';
+      dropzone.style.borderColor = 'var(--accent)';
+      dropzone.style.backgroundColor = 'var(--surface2)';
     });
     
     dropzone.addEventListener('dragleave', () => {
-      dropzone.style.borderColor = '#3F51B5';
-      dropzone.style.backgroundColor = '#f9f9f9';
+      dropzone.style.borderColor = 'var(--border)';
+      dropzone.style.backgroundColor = '';
     });
     
     dropzone.addEventListener('drop', (e) => {
       e.preventDefault();
-      dropzone.style.borderColor = '#3F51B5';
-      dropzone.style.backgroundColor = '#f9f9f9';
+      dropzone.style.borderColor = 'var(--border)';
+      dropzone.style.backgroundColor = '';
       
       const file = e.dataTransfer.files[0];
       handleImageFile(file);
@@ -1684,7 +1638,7 @@
         };
         reader.readAsDataURL(file);
       } else {
-        alert('Please select a valid image file');
+        showToast('Valitse kelvollinen kuvatiedosto', 'warn');
       }
     }
     
@@ -1700,6 +1654,7 @@
           video: { facingMode: 'environment' } 
         });
         barcodeVideo.srcObject = stream;
+        window._cameraStream = stream;
         
         // In a real app, we would use a proper barcode detection library
         // For this demo, we'll allow the user to confirm when they want to capture the current frame
@@ -1710,10 +1665,10 @@
         captureArea.style.textAlign = 'center';
         captureArea.style.margin = '10px 0';
         captureArea.innerHTML = `
-          <button id="capture-frame-btn" class="btn primary-btn" style="margin-right: 10px">
+          <button id="capture-frame-btn" class="btn btn-primary" style="margin-right: 10px">
             <i class="fas fa-camera"></i> Capture
           </button>
-          <button id="manual-entry-btn" class="btn secondary-btn">
+          <button id="manual-entry-btn" class="btn btn-ghost">
             <i class="fas fa-keyboard"></i> Enter Manually
           </button>
         `;
@@ -1729,6 +1684,7 @@
           if (detectedBarcode && detectedBarcode.trim() !== '') {
             if (stream) {
               stream.getTracks().forEach(track => track.stop());
+              window._cameraStream = null;
             }
             barcodeScanner.removeChild(captureArea);
             barcodeScanner.style.display = 'none';
@@ -1753,7 +1709,7 @@
         
       } catch (err) {
         console.error('Error accessing camera:', err);
-        alert('Could not access camera. Please ensure you have granted camera permissions.');
+        showToast('Kameraa ei voitu käyttää. Tarkista käyttöoikeudet.', 'error');
         barcodeScanner.style.display = 'none';
       }
     });
@@ -1767,7 +1723,7 @@
     
     lookupBarcodeBtn.addEventListener('click', () => {
       if (barcodeInput.value.trim() === '') {
-        alert('Please enter a barcode number');
+        showToast('Syötä viivakoodinumero', 'warn');
         return;
       }
       analyzeProduct('barcode');
@@ -1781,7 +1737,7 @@
       const barcode = document.getElementById('product-barcode').value.trim();
       
       if (name === '' || brand === '' || ingredients === '') {
-        alert('Please fill out all required fields');
+        showToast('Täytä kaikki pakolliset kentät', 'warn');
         return;
       }
       
@@ -1802,8 +1758,8 @@
       resetActiveSections();
       
       // Show loading
-      loading.style.display = 'block';
-      resultContainer.style.display = 'none';
+      loading.classList.add('show');
+      resultContainer.classList.remove('visible');
       
       let product;
       
@@ -1869,85 +1825,83 @@
           }
         } catch (error) {
           console.error('Error analyzing image:', error);
-          alert('Error analyzing image. Please try again.');
-          loading.style.display = 'none';
+          showToast('Kuvan analysointi epäonnistui. Yritä uudelleen.', 'error');
+          loading.classList.remove('show');
           return;
         }
       }
       // Handle barcode method
       else if (method === 'barcode') {
         const barcode = barcodeInput.value.trim();
-        
-        // Try to get product from local database
+
+        // Step 1: Try local cache first
         if (window.localProductDB) {
           const localProduct = window.localProductDB.getProductByBarcode(barcode);
           if (localProduct) {
-            console.log('Product found in local database:', localProduct);
+            console.log('Product found in local cache:', localProduct.name);
             product = localProduct;
           } else {
-            console.log('Product not found in local database, offering manual entry');
-            
-            // Show product not found message and offer manual entry
-            loading.style.display = 'none';
-            resultContainer.style.display = 'none';
-            
-            // Create a product not found message with manual entry option
-            const notFoundContainer = document.createElement('div');
-            notFoundContainer.className = 'not-found-container';
-            notFoundContainer.style.textAlign = 'center';
-            notFoundContainer.style.padding = '20px';
-            notFoundContainer.style.marginTop = '20px';
-            notFoundContainer.innerHTML = `
-              <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #F44336;"></i>
-              <h3>Product Not Found</h3>
-              <p>We couldn't find a product with barcode: ${barcode}</p>
-              <p>Would you like to enter the product details manually?</p>
-              <div style="margin-top: 20px;">
-                <button id="manual-entry-redirect" class="btn primary-btn">
-                  <i class="fas fa-pencil-alt"></i> Enter Details Manually
-                </button>
-                <button id="scan-again-btn" class="btn secondary-btn" style="margin-left: 10px;">
-                  <i class="fas fa-barcode"></i> Scan Again
-                </button>
-              </div>
-            `;
-            
-            // Find the main content area to attach message to
-            const contentArea = document.querySelector('.content');
-            contentArea.appendChild(notFoundContainer);
-            
-            // Add event listener for manual entry button
-            document.getElementById('manual-entry-redirect').addEventListener('click', () => {
-              // Pre-fill barcode field if available
-              const barcodeField = document.getElementById('product-barcode');
-              if (barcodeField) {
-                barcodeField.value = barcode;
-              }
+            // Step 2: Try Open Food Facts API
+            console.log('Not in local cache, trying Open Food Facts API...');
+            const offProduct = await window.localProductDB.fetchFromOpenFoodFacts(barcode);
+
+            if (offProduct) {
+              console.log('Product found in Open Food Facts:', offProduct.name);
+              product = offProduct;
+            } else {
+              // Step 3: Not found anywhere — show not-found UI with OFF link
+              console.log('Product not found in any source');
+loading.classList.remove('show');
+      resultContainer.classList.remove('visible');
+
+              const offUrl = `https://world.openfoodfacts.org/product/${barcode}`;
+              const contentArea = document.querySelector('#hero-area');
               
-              // Remove not found message
-              contentArea.removeChild(notFoundContainer);
-              
-              // Show manual entry tab
-              activateTab('manual-entry');
-            });
-            
-            // Add event listener for scan again button
-            document.getElementById('scan-again-btn').addEventListener('click', () => {
-              // Remove not found message
-              contentArea.removeChild(notFoundContainer);
-              
-              // Show barcode scanning again
-              scanBarcodeBtn.click();
-            });
-            
-            // Exit early since we're showing custom UI
-            return;
+              // Remove any previous not-found containers
+              contentArea.querySelectorAll('.not-found-container').forEach(el => el.remove());
+
+              const notFoundContainer = document.createElement('div');
+              notFoundContainer.className = 'not-found-container';
+              notFoundContainer.innerHTML = `
+                <i class="fas fa-exclamation-circle" style="font-size:48px;color:var(--danger);"></i>
+                <h3>Tuotetta ei löytynyt</h3>
+                <p>Tuotetta viivakoodilla <strong>${barcode}</strong> ei löytynyt.</p>
+                <p>Tuote ei ehkä ole vielä Open Food Facts -tietokannassa.</p>
+                <div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+                  <a href="${offUrl}" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none;">
+                    <i class="fas fa-external-link-alt"></i> Lisää Open Food Factsiin
+                  </a>
+                  <button id="manual-entry-redirect" class="btn btn-ghost">
+                    <i class="fas fa-pencil-alt"></i> Syötä käsin
+                  </button>
+                  <button id="scan-again-btn" class="btn btn-ghost">
+                    <i class="fas fa-barcode"></i> Skannaa uudelleen
+                  </button>
+                </div>
+              `;
+
+              contentArea.appendChild(notFoundContainer);
+
+              document.getElementById('manual-entry-redirect').addEventListener('click', () => {
+                const barcodeField = document.getElementById('product-barcode');
+                if (barcodeField) barcodeField.value = barcode;
+                contentArea.removeChild(notFoundContainer);
+                activateTab('manual-entry');
+              });
+
+              document.getElementById('scan-again-btn').addEventListener('click', () => {
+                contentArea.removeChild(notFoundContainer);
+                scanBarcodeBtn.click();
+              });
+
+              return;
+            }
           }
         } else {
-          // Fallback if local database not available
+          // No localProductDB at all (shouldn't happen)
           product = {
             barcode: barcode,
-            name: 'Valio Laktoositon Rasvaton Maito',
+            name: 'Unknown Product',
             brand: 'Valio',
             origin: 'Finland',
             ingredients: 'Milk, vitamin D, E202, citric acid (E330)',
@@ -1991,16 +1945,32 @@
       }
       
       // Hide loading and show results
-      loading.style.display = 'none';
-      resultContainer.style.display = 'block';
+      loading.classList.remove('show');
+      resultContainer.classList.add('visible');
       
       // Analyze for allergens
       const allergens = extractAllergensWithDetails(product.ingredients);
       
-      // Find E-codes
+      // Find E-codes — also catch codes not in DB
       let eCodes = [];
       try {
         eCodes = window.extractECodesFromText ? window.extractECodesFromText(product.ingredients) : [];
+        // Also catch any E-code pattern not in database
+        const allMatches = product.ingredients.match(/E[-\s]?\d{3,4}[a-z]?/gi) || [];
+        allMatches.forEach(m => {
+          const code = 'E' + m.replace(/[^0-9a-z]/gi, '').substring(1);
+          if (!eCodes.find(e => e.code === code)) {
+            eCodes.push({
+              code,
+              name: 'Unknown additive',
+              category: 'Unknown',
+              origin: 'Unknown',
+              function: 'Unknown',
+              potentialIssues: ['Not in local database'],
+              commonIn: []
+            });
+          }
+        });
       } catch (e) {
         console.error('Error extracting E-codes:', e);
       }
@@ -2010,6 +1980,9 @@
       
       // Render product details with tabs
       renderProductDetails(product, allergens, eCodes);
+      
+      // Auto-scroll to result
+      resultContainer.scrollIntoView({ behavior: 'smooth' });
     }
     
     // Function to highlight E-codes and allergens in text
@@ -2059,24 +2032,24 @@
       const overviewHTML = `
         <div class="tab-content active" id="overview-content">
           <h3>${product.name}</h3>
-          <p><strong>Brand:</strong> ${product.brand}</p>
-          <p><strong>Origin:</strong> ${product.origin}</p>
-          <p><strong>Ingredients:</strong> ${highlightedIngredients}</p>
+          <p><strong>Valmistaja:</strong> ${product.brand}</p>
+          <p><strong>Alkuperä:</strong> ${product.origin}</p>
+          <p><strong>Ainesosat:</strong> ${highlightedIngredients}</p>
           
           <div class="detail-section">
             <div class="tag-section">
-              <span class="tag-section-title">Identified Allergens:</span>
+              <span class="tag-section-title">Tunnistetut allergeenit:</span>
               <div class="tag-container" id="allergen-tags">
                 ${allergens.length > 0 ? 
                   allergens.map(a => `<span class="allergen-tag" data-allergen="${a.name}">${a.name}</span>`).join('') 
-                  : '<span>None detected</span>'}
+                  : '<span>Ei havaittu</span>'}
               </div>
             </div>
           </div>
           
           <div class="detail-section">
             <div class="tag-section">
-              <span class="tag-section-title">Identified E-Numbers:</span>
+              <span class="tag-section-title">Tunnistetut E-numerot:</span>
               <div class="tag-container" id="ecode-tags">
                 ${eCodes.length > 0 ? 
                   eCodes.map(e => `<span class="e-code-tag" data-ecode="${e.code}">${e.code} (${e.name})</span>`).join('') 
@@ -2086,16 +2059,20 @@
           </div>
           
           <div class="detail-section">
-            <h4>Nutritional Values:</h4>
-            <p>Calories: ${product.nutritionalValues.calories}</p>
-            <p>Protein: ${product.nutritionalValues.protein}</p>
-            <p>Carbohydrates: ${product.nutritionalValues.carbohydrates}</p>
-            <p>Fat: ${product.nutritionalValues.fat}</p>
+            <h4>Ravintosisältö:</h4>
+            <p>Kalorit: ${product.nutritionalValues.calories}</p>
+            <p>Proteiini: ${product.nutritionalValues.protein}</p>
+            <p>Hiilihydraatit: ${product.nutritionalValues.carbohydrates}</p>
+            <p>Rasva: ${product.nutritionalValues.fat}</p>
           </div>
           
           <div style="margin-top: 20px">
-            <button class="btn" id="get-recipes-btn"><i class="fas fa-utensils"></i> Get Recipe Suggestions</button>
-            <button class="btn" onclick="alert('Feature coming soon!')"><i class="fas fa-plus"></i> Add to Inventory</button>
+            <button class="btn btn-primary" id="get-recipes-btn"><i class="fas fa-utensils"></i> Reseptiehdotukset</button>
+            <div id="product-recipes-section" style="margin-top:10px;"></div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-small" onclick="showAllergenBank()"><i class="fas fa-shield-alt"></i> Allergeenipankki</button>
+            <button class="btn btn-ghost btn-small" onclick="showRecipeBank()"><i class="fas fa-utensils"></i> Reseptipankki</button>
           </div>
         </div>
       `;
@@ -2204,11 +2181,35 @@
         });
       });
       
-      // Add click event to recipe button
+      // Add click event to recipe button — show inline
       const getRecipesBtn = document.getElementById('get-recipes-btn');
       if (getRecipesBtn) {
         getRecipesBtn.addEventListener('click', () => {
-          showRecipeSuggestions(currentDisplayedProduct);
+          const section = document.getElementById('product-recipes-section');
+          if (!section || !currentDisplayedProduct) return;
+          section.innerHTML = '<div class="spinner" style="margin:12px auto;"></div>';
+          
+          if (window.recipeAdapter) {
+            window.recipeAdapter.getRecipesForProduct(currentDisplayedProduct).then(recipes => {
+              if (recipes.length > 0) {
+                section.innerHTML = '<h4 style="font-size:13px;color:var(--accent);margin:8px 0;">🍳 Reseptiehdotukset</h4>' +
+                  recipes.slice(0, 3).map(r => `
+                    <div class="recipe-card" style="margin-bottom:6px;" onclick="window.showRecipeForBank('${r.id}','${r.provider}')">
+                      <div class="recipe-icon-placeholder"><i class="fas fa-utensils"></i></div>
+                      <div class="recipe-details">
+                        <span class="recipe-provider-badge">${r.provider}</span>
+                        <div class="recipe-title">${r.title}</div>
+                        <div class="recipe-info">${r.prepTime||''} ${r.servings?'· '+r.servings+' servings':''}</div>
+                      </div>
+                    </div>
+                  `).join('');
+              } else {
+                section.innerHTML = '<p style="color:var(--text2);font-size:12px;">Ei reseptejä tälle tuotteelle.</p>';
+              }
+            }).catch(() => {
+              section.innerHTML = '<p style="color:var(--text2);font-size:12px;">Reseptilähteet eivät saatavilla.</p>';
+            });
+          }
         });
       }
     }
@@ -2362,51 +2363,45 @@
     function extractAllergensWithDetails(ingredientsText) {
       if (!ingredientsText) return [];
       
-      // Helper function to check if an allergen is present
-      function containsAllergen(ingredients, allergenName) {
-        return ingredients.toLowerCase().includes(allergenName.toLowerCase());
-      }
-      
+      const lowerText = ingredientsText.toLowerCase();
       const foundAllergens = [];
-      const processedAllergens = new Set(); // To avoid duplicates
+      const processedAllergens = new Set();
       
-      // This will work once the module is loaded
+      // Finnish → English allergen mapping
+      const fiMap = {
+        'maito': 'milk', 'maitoa': 'milk', 'maidon': 'milk',
+        'vehnä': 'wheat', 'vehnää': 'wheat', 'vehnän': 'wheat',
+        'kananmuna': 'egg', 'kananmunaa': 'egg', 'munaa': 'egg', 'muna': 'egg',
+        'soija': 'soy', 'soijaa': 'soy', 'soijan': 'soy',
+        'pähkinä': 'nuts', 'pähkinää': 'nuts',
+        'maapähkinä': 'peanut', 'maapähkinää': 'peanut',
+        'manteli': 'nuts', 'mantelia': 'nuts',
+        'kala': 'fish', 'kalaa': 'fish', 'kalan': 'fish',
+        'äyriäinen': 'shellfish', 'äyriäisiä': 'shellfish',
+        'seesami': 'sesame', 'seesamin': 'sesame',
+        'gluteeni': 'gluten', 'gluteenia': 'gluten',
+        'sulfiitti': 'sulfite', 'sulfiittia': 'sulfite',
+        // Note: "laktoositon" = lactose-free, so we skip "laktoosi" as false positive
+      };
+      
       if (window.allergenDatabase) {
+        // Check English keys
         for (const [key, allergen] of Object.entries(window.allergenDatabase)) {
-          if (containsAllergen(ingredientsText, key) && !processedAllergens.has(allergen.name)) {
+          if (lowerText.includes(key) && !processedAllergens.has(allergen.name)) {
             processedAllergens.add(allergen.name);
             foundAllergens.push(allergen);
           }
         }
-      } else {
-        // Fallback if the module isn't loaded yet
-        const commonAllergens = [
-          'milk', 'dairy', 'lactose', 
-          'wheat', 'gluten', 'rye', 'barley', 'oats',
-          'egg', 'eggs',
-          'nuts', 'peanuts', 'almonds', 'walnuts', 'cashews',
-          'soy', 'soybeans',
-          'fish', 'shellfish', 'crustaceans',
-          'sesame'
-        ];
-        
-        const lowerIngredients = ingredientsText.toLowerCase();
-        
-        commonAllergens.forEach(allergen => {
-          if (lowerIngredients.includes(allergen) && !processedAllergens.has(allergen)) {
-            processedAllergens.add(allergen);
-            // Create a minimal allergen object
-            foundAllergens.push({
-              name: allergen.charAt(0).toUpperCase() + allergen.slice(1),
-              description: `Potential allergen: ${allergen}`,
-              symptoms: {
-                mild: ['Skin reactions', 'Digestive issues'],
-                moderate: ['Respiratory symptoms'],
-                severe: ['Anaphylaxis (in severe cases)']
-              }
-            });
+        // Check Finnish words
+        for (const [fiWord, enKey] of Object.entries(fiMap)) {
+          if (lowerText.includes(fiWord)) {
+            const allergen = window.allergenDatabase[enKey];
+            if (allergen && !processedAllergens.has(allergen.name)) {
+              processedAllergens.add(allergen.name);
+              foundAllergens.push(allergen);
+            }
           }
-        });
+        }
       }
       
       return foundAllergens;
@@ -2419,37 +2414,36 @@
     const recipeProviderSelect = document.getElementById('recipe-provider');
     const recipeApiKeyButton = document.getElementById('recipe-api-key-button');
     const saveApiKeyButton = document.getElementById('save-api-key-button');
-    const closeModalButtons = document.querySelectorAll('.close-modal');
     
     // Close modals when clicking the X button
-    closeModalButtons.forEach(button => {
+    document.querySelectorAll('.close-btn').forEach(button => {
       button.addEventListener('click', () => {
-        recipeModal.style.display = 'none';
-        apiKeyModal.style.display = 'none';
+        if (recipeModal) recipeModal.classList.remove('open');
+        if (apiKeyModal) apiKeyModal.classList.remove('open');
       });
     });
     
     // Close modals when clicking outside the content
     window.addEventListener('click', (event) => {
-      if (event.target === recipeModal) {
-        recipeModal.style.display = 'none';
+      if (recipeModal && event.target === recipeModal) {
+        recipeModal.classList.remove('open');
       }
-      if (event.target === apiKeyModal) {
-        apiKeyModal.style.display = 'none';
+      if (apiKeyModal && event.target === apiKeyModal) {
+        apiKeyModal.classList.remove('open');
       }
     });
     
-    // Show API key modal when button is clicked
-    recipeApiKeyButton.addEventListener('click', () => {
-      apiKeyModal.style.display = 'block';
-      
-      // Load saved API keys if any
-      try {
-        const savedKeys = JSON.parse(localStorage.getItem('recipeApiKeys') || '{}');
+    // Show API key modal when button is clicked (if it exists)
+    if (recipeApiKeyButton) {
+      recipeApiKeyButton.addEventListener('click', () => {
+        apiKeyModal.classList.add('open');
         
-        if (savedKeys.spoonacular) {
-          document.getElementById('spoonacular-key').value = savedKeys.spoonacular;
-        }
+        // Load saved API keys if any
+        try {
+          const savedKeys = JSON.parse(localStorage.getItem('recipeApiKeys') || '{}');
+          if (savedKeys.spoonacular) {
+            document.getElementById('spoonacular-key').value = savedKeys.spoonacular;
+          }
         
         if (savedKeys.edamam) {
           const parts = savedKeys.edamam.split('|');
@@ -2462,23 +2456,17 @@
         console.error('Failed to load API keys:', e);
       }
     });
+    }
     
     // Premium user toggle
     const premiumUserToggle = document.getElementById('premium-user-toggle');
     const premiumFeatures = document.getElementById('premium-features');
     const customApiSection = document.getElementById('custom-api-section');
-    const premiumUpgradeBtn = document.getElementById('premium-upgrade-btn');
     
     // Recipe filter elements
     const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
     const recipeFilters = document.getElementById('recipe-filters');
     const applyFiltersBtn = document.getElementById('apply-filters-btn');
-    const filterVegetarian = document.getElementById('filter-vegetarian');
-    const filterVegan = document.getElementById('filter-vegan');
-    const filterGlutenFree = document.getElementById('filter-gluten-free');
-    const filterDairyFree = document.getElementById('filter-dairy-free');
-    const filterLowSugar = document.getElementById('filter-low-sugar');
-    const filterNutFree = document.getElementById('filter-nut-free');
     const maxIngredientsSelect = document.getElementById('max-ingredients');
     
     // Current filter settings
@@ -2490,25 +2478,25 @@
       lowSugar: false,
       nutFree: false,
       maxIngredients: 0,
-      requiredIngredients: [] // List of ingredients that must be in the recipe
+      requiredIngredients: []
     };
     
-    // Make you admin by default
-    localStorage.setItem('isPremiumUser', 'true');
+    // Make user admin by default for demo
+    if (!localStorage.getItem('isPremiumUser')) {
+      localStorage.setItem('isPremiumUser', 'true');
+    }
     
     // Load premium status
     try {
-      const isPremium = localStorage.getItem('isPremiumUser') === 'true';
-      premiumUserToggle.checked = isPremium;
-      if (isPremium) {
-        premiumFeatures.style.display = 'block';
-        customApiSection.style.display = 'block';
-        premiumUpgradeBtn.innerHTML = '<i class="fas fa-crown"></i> Premium Active';
-        premiumUpgradeBtn.style.backgroundColor = '#4CAF50';
+      if (premiumUserToggle) {
+        const isPremium = localStorage.getItem('isPremiumUser') === 'true';
+        premiumUserToggle.checked = isPremium;
+        if (premiumFeatures) premiumFeatures.style.display = isPremium ? 'block' : 'none';
+        if (customApiSection) customApiSection.style.display = isPremium ? 'block' : 'none';
       }
       
-      // Initialize recipe provider dropdown based on available providers
-      if (window.recipeAdapter) {
+      // Initialize recipe provider dropdown
+      if (window.recipeAdapter && document.getElementById('recipe-provider')) {
         updateRecipeProviderDropdown();
       }
     } catch (e) {
@@ -2536,76 +2524,53 @@
     
     // Set up toggle event listeners
     document.querySelectorAll('.toggle-container input[type="checkbox"]').forEach(toggle => {
-      // Initialize status
       updateToggleStatus(toggle);
       
-      // Add change listener
       toggle.addEventListener('change', () => {
         updateToggleStatus(toggle);
         
-        // Check if this is a recipe source toggle
         const id = toggle.id;
         if (id && (id.startsWith('enable-k-ruoka') || 
                   id.startsWith('enable-pirkka') || 
                   id.startsWith('enable-valio') || 
                   id.startsWith('enable-edamam'))) {
-          // Update recipe provider dropdown if source was toggled
           updateRecipeProviderDropdown();
         }
       });
     });
     
     // Premium user toggle
-    premiumUserToggle.addEventListener('change', () => {
-      const isPremium = premiumUserToggle.checked;
-      
-      if (isPremium) {
-        premiumFeatures.style.display = 'block';
-        customApiSection.style.display = 'block';
-        premiumUpgradeBtn.innerHTML = '<i class="fas fa-crown"></i> Premium Active';
-        premiumUpgradeBtn.style.backgroundColor = '#4CAF50';
-      } else {
-        premiumFeatures.style.display = 'none';
-        customApiSection.style.display = 'none';
-        premiumUpgradeBtn.innerHTML = '<i class="fas fa-crown"></i> Upgrade to Premium';
-        premiumUpgradeBtn.style.backgroundColor = '#9c27b0';
-      }
-      
-      localStorage.setItem('isPremiumUser', isPremium);
-    });
-    
-    // Premium upgrade button
-    premiumUpgradeBtn.addEventListener('click', () => {
-      if (!premiumUserToggle.checked) {
-        // For demo purposes, just toggle premium status
-        premiumUserToggle.checked = true;
-        premiumUserToggle.dispatchEvent(new Event('change'));
-        alert('Premium features activated for demonstration purposes!');
-      }
-    });
+    if (premiumUserToggle) {
+      premiumUserToggle.addEventListener('change', () => {
+        const isPremium = premiumUserToggle.checked;
+        if (premiumFeatures) premiumFeatures.style.display = isPremium ? 'block' : 'none';
+        if (customApiSection) customApiSection.style.display = isPremium ? 'block' : 'none';
+        localStorage.setItem('isPremiumUser', isPremium);
+        updateRecipeProviderDropdown();
+      });
+    }
     
     // Add custom API button
     const addCustomApiBtn = document.getElementById('add-custom-api-btn');
-    addCustomApiBtn.addEventListener('click', () => {
-      const name = document.getElementById('custom-api-name').value.trim();
-      const url = document.getElementById('custom-api-url').value.trim();
-      const key = document.getElementById('custom-api-key').value.trim();
-      
-      if (!name || !url) {
-        alert('Please enter at least API name and URL');
-        return;
-      }
-      
-      alert(`Custom API "${name}" added successfully!`);
-      
-      // Reset fields
-      document.getElementById('custom-api-name').value = '';
-      document.getElementById('custom-api-url').value = '';
-      document.getElementById('custom-api-key').value = '';
-    });
+    if (addCustomApiBtn) {
+      addCustomApiBtn.addEventListener('click', () => {
+        const name = document.getElementById('custom-api-name')?.value?.trim() || '';
+        const url = document.getElementById('custom-api-url')?.value?.trim() || '';
+        const key = document.getElementById('custom-api-key')?.value?.trim() || '';
+        
+        if (!name || !url) {
+          showToast('Syötä vähintään API:n nimi ja URL', 'warn');
+          return;
+        }
+        
+        showToast(`Mukautettu API "${name}" lisätty!`, 'info');
+      });
+    }
     
     // Function to update recipe provider dropdown
     function updateRecipeProviderDropdown() {
+      if (!recipeProviderSelect) return;
+      
       // Clear current options
       recipeProviderSelect.innerHTML = '';
       
@@ -2661,7 +2626,8 @@
     }
     
     // Save API keys and settings
-    saveApiKeyButton.addEventListener('click', () => {
+    if (saveApiKeyButton) {
+      saveApiKeyButton.addEventListener('click', () => {
       const apiKeys = {};
       
       const spoonacularKey = document.getElementById('spoonacular-key').value.trim();
@@ -2690,38 +2656,32 @@
         }
         
         // Save premium settings
-        if (premiumUserToggle.checked) {
+        if (premiumUserToggle && premiumUserToggle.checked) {
           const enabledSources = {
-            kRuoka: document.getElementById('enable-k-ruoka').checked,
-            pirkka: document.getElementById('enable-pirkka').checked,
-            valio: document.getElementById('enable-valio').checked,
-            edamam: document.getElementById('enable-edamam').checked
-          };
-          
-          const enabledFeatures = {
-            nutritionalAnalysis: document.getElementById('enable-nutritional-analysis').checked,
-            mealPlanning: document.getElementById('enable-meal-planning').checked,
-            customSources: document.getElementById('enable-custom-sources').checked,
-            unlimitedStorage: document.getElementById('enable-unlimited-storage').checked
+            kRuoka: document.getElementById('enable-k-ruoka')?.checked ?? true,
+            pirkka: document.getElementById('enable-pirkka')?.checked ?? true,
+            valio: document.getElementById('enable-valio')?.checked ?? true,
+            edamam: document.getElementById('enable-edamam')?.checked ?? true
           };
           
           localStorage.setItem('premiumSources', JSON.stringify(enabledSources));
-          localStorage.setItem('premiumFeatures', JSON.stringify(enabledFeatures));
         }
         
         // Update recipe provider dropdown
         updateRecipeProviderDropdown();
         
-        alert('Settings saved successfully!');
-        apiKeyModal.style.display = 'none';
+        showToast('Asetukset tallennettu!', 'info');
+        apiKeyModal.classList.remove('open');
       } catch (e) {
         console.error('Failed to save settings:', e);
-        alert('Failed to save settings. Please try again.');
+        showToast('Asetusten tallennus epäonnistui.', 'error');
       }
     });
+    }
     
     // Change provider order when dropdown selection changes
-    recipeProviderSelect.addEventListener('change', () => {
+    if (recipeProviderSelect) {
+      recipeProviderSelect.addEventListener('change', () => {
       const selectedProvider = recipeProviderSelect.value;
       
       if (window.recipeAdapter) {
@@ -2736,6 +2696,7 @@
         }
       }
     });
+    }
     
     // Current product being viewed
     let currentProduct = null;
@@ -2745,13 +2706,13 @@
       currentProduct = product;
       
       // Show the modal
-      recipeModal.style.display = 'block';
+      recipeModal.classList.add('open');
       
       // Show loading state
       recipeContent.innerHTML = `
-        <div style="text-align: center; padding: 30px;">
-          <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3F51B5;"></i>
-          <p style="margin-top: 15px;">Loading recipe suggestions...</p>
+        <div style="text-align:center;padding:30px;">
+          <div class="spinner" style="margin:0 auto 16px;"></div>
+          <p style="color:var(--text2);">Loading recipe suggestions…</p>
         </div>
       `;
       
@@ -2766,11 +2727,11 @@
         
         if (recipes.length === 0) {
           recipeContent.innerHTML = `
-            <div style="text-align: center; padding: 30px;">
-              <i class="fas fa-utensils" style="font-size: 48px; color: #757575; margin-bottom: 15px;"></i>
+            <div style="text-align:center;padding:30px;">
+              <i class="fas fa-utensils" style="font-size:48px;color:var(--text2);margin-bottom:15px;"></i>
               <h3>No Recipes Found</h3>
-              <p>We couldn't find any recipes for ${product.name}.</p>
-              <p>Try setting up API keys for more recipe sources, or try a different product.</p>
+              <p style="color:var(--text2);">We couldn't find any recipes for ${product.name}.</p>
+              <p style="color:var(--text2);">Try setting up API keys for more recipe sources, or try a different product.</p>
             </div>
           `;
           return;
@@ -2785,11 +2746,11 @@
         console.error('Error loading recipes:', error);
         
         recipeContent.innerHTML = `
-          <div style="text-align: center; padding: 30px;">
-            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #F44336; margin-bottom: 15px;"></i>
+          <div style="text-align:center;padding:30px;">
+            <i class="fas fa-exclamation-triangle" style="font-size:48px;color:var(--danger);margin-bottom:15px;"></i>
             <h3>Error Loading Recipes</h3>
-            <p>${error.message}</p>
-            <p>Please try again or set up API keys for recipe sources.</p>
+            <p style="color:var(--text2);">${error.message}</p>
+            <p style="color:var(--text2);">Please try again or set up API keys for recipe sources.</p>
           </div>
         `;
       }
@@ -2895,9 +2856,9 @@
       
       // Show loading state
       recipeContent.innerHTML = `
-        <div style="text-align: center; padding: 30px;">
-          <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #3F51B5;"></i>
-          <p style="margin-top: 15px;">Loading recipe details...</p>
+        <div style="text-align:center;padding:30px;">
+          <div class="spinner" style="margin:0 auto 16px;"></div>
+          <p style="color:var(--text2);">Loading recipe details…</p>
         </div>
       `;
       
@@ -3029,92 +2990,6 @@
                 </div>
               </div>
             </div>
-            
-            <style>
-              .recipe-ingredients-section {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 20px;
-              }
-              .recipe-ingredients-list {
-                flex: 2;
-                min-width: 300px;
-              }
-              .add-ingredient-section {
-                flex: 1;
-                min-width: 250px;
-                background-color: #f5f5f5;
-                padding: 15px;
-                border-radius: 8px;
-              }
-              .ingredient-item {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 5px;
-              }
-              .ingredient-name {
-                flex: 1;
-              }
-              .allergen-warning {
-                color: #ff5722;
-                cursor: help;
-              }
-              .ingredient-actions {
-                display: flex;
-                gap: 5px;
-              }
-              .btn-small {
-                padding: 2px 5px;
-                font-size: 12px;
-                border-radius: 4px;
-                cursor: pointer;
-                border: none;
-              }
-              .btn-info {
-                background-color: #2196F3;
-                color: white;
-              }
-              .btn-alt {
-                background-color: #4CAF50;
-                color: white;
-              }
-              .ingredient-details {
-                margin-left: 20px;
-                margin-top: 5px;
-                padding: 10px;
-                background-color: #f9f9f9;
-                border-left: 3px solid #2196F3;
-                font-size: 14px;
-              }
-              .add-ingredient-form {
-                display: flex;
-                gap: 8px;
-                margin-bottom: 10px;
-              }
-              .ingredient-input {
-                flex: 1;
-                padding: 8px;
-                border-radius: 4px;
-                border: 1px solid #ddd;
-              }
-              .ingredient-search-results {
-                max-height: 200px;
-                overflow-y: auto;
-                background-color: white;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                margin-top: 10px;
-              }
-              .ingredient-search-item {
-                padding: 8px 12px;
-                border-bottom: 1px solid #eee;
-                cursor: pointer;
-              }
-              .ingredient-search-item:hover {
-                background-color: #f0f0f0;
-              }
-            </style>
             
             ${recipe.instructions && recipe.instructions.length > 0 ? `
               <h3>Instructions</h3>
@@ -3484,12 +3359,12 @@
         console.error('Error loading recipe details:', error);
         
         recipeContent.innerHTML = `
-          <div style="text-align: center; padding: 30px;">
-            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #F44336; margin-bottom: 15px;"></i>
+          <div style="text-align:center;padding:30px;">
+            <i class="fas fa-exclamation-triangle" style="font-size:48px;color:var(--danger);margin-bottom:15px;"></i>
             <h3>Error Loading Recipe</h3>
-            <p>${error.message}</p>
-            <div style="margin-top: 20px;">
-              <button class="btn error-back-btn">
+            <p style="color:var(--text2);">${error.message}</p>
+            <div style="margin-top:20px;">
+              <button class="error-back-btn">
                 <i class="fas fa-arrow-left"></i> Back to Recipes
               </button>
             </div>
@@ -3506,8 +3381,9 @@
       }
     }
     
-    // Toggle recipe filters visibility
-    toggleFiltersBtn.addEventListener('click', () => {
+    // Toggle recipe filters visibility (only if filter elements exist)
+    if (toggleFiltersBtn) {
+      toggleFiltersBtn.addEventListener('click', () => {
       if (recipeFilters.style.display === 'none' || !recipeFilters.style.display) {
         recipeFilters.style.display = 'block';
         toggleFiltersBtn.innerHTML = '<i class="fas fa-times"></i> Hide Filters';
@@ -3516,6 +3392,7 @@
         toggleFiltersBtn.innerHTML = '<i class="fas fa-filter"></i> Filter Options';
       }
     });
+    } // end if (toggleFiltersBtn)
     
     // Get DOM elements for the new tag-based filter system
     const addIngredientInput = document.getElementById('add-ingredient-filter');
@@ -3838,5 +3715,5 @@
       });
     }
   </script>
-</body>
+
 </html>

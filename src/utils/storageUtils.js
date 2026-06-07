@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEYS = {
   PREFERENCES: 'food_scanner_preferences',
   RECENTLY_SCANNED: 'food_scanner_recent_products',
+  PRODUCT_CACHE_PREFIX: 'food_scanner_cache_',
 };
 
 // Maximum number of recently scanned products to store
@@ -117,5 +118,57 @@ export const clearAllAppData = async () => {
   } catch (error) {
     console.error('Error clearing app data:', error);
     return false;
+  }
+};
+
+// ── Product cache (offline support) ─────────────────────────────
+
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/**
+ * Cache a product locally for offline use.
+ * @param {string} barcode
+ * @param {Object} product — full Product object
+ */
+export const cacheProduct = async (barcode, product) => {
+  try {
+    const entry = {
+      product,
+      cachedAt: Date.now(),
+    };
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.PRODUCT_CACHE_PREFIX + barcode,
+      JSON.stringify(entry),
+    );
+  } catch (error) {
+    console.error('Error caching product:', error);
+  }
+};
+
+/**
+ * Retrieve a cached product, respecting TTL.
+ * @param {string} barcode
+ * @returns {Object|null} — Product object, or null if expired / missing
+ */
+export const getCachedProduct = async (barcode) => {
+  try {
+    const raw = await AsyncStorage.getItem(
+      STORAGE_KEYS.PRODUCT_CACHE_PREFIX + barcode,
+    );
+    if (!raw) return null;
+
+    const entry = JSON.parse(raw);
+    const age = Date.now() - entry.cachedAt;
+
+    // Expire old entries
+    if (age > CACHE_TTL_MS) {
+      await AsyncStorage.removeItem(STORAGE_KEYS.PRODUCT_CACHE_PREFIX + barcode);
+      return null;
+    }
+
+    return entry.product;
+  } catch (error) {
+    console.error('Error reading cached product:', error);
+    return null;
   }
 };

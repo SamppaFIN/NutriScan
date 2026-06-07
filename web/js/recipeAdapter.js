@@ -270,19 +270,27 @@ class LocalRecipeProvider extends RecipeProvider {
   /**
    * Load recipes from local storage
    */
-  loadRecipes() {
+  async loadRecipes() {
+    // Quick sync check: localStorage cache
     try {
-      const savedRecipes = localStorage.getItem('localRecipes');
-      if (savedRecipes) {
-        this.recipes = JSON.parse(savedRecipes);
-      } else {
-        // Prepopulate with a few basic recipes
-        this.prepopulateRecipes();
+      const saved = localStorage.getItem('localRecipes');
+      if (saved) { this.recipes = JSON.parse(saved); }
+    } catch (e) {}
+    
+    // Async: try JSON file (overwrites cache)
+    try {
+      const resp = await fetch('./js/recipes.json');
+      if (resp.ok) {
+        this.recipes = await resp.json();
+        console.log(`Loaded ${this.recipes.length} recipes from recipes.json`);
+        return;
       }
     } catch (e) {
-      console.error('Failed to load recipes from local storage:', e);
-      this.prepopulateRecipes();
+      console.warn('Could not fetch recipes.json:', e.message);
     }
+    
+    // Fallback: old hardcoded
+    if (!this.recipes.length) this.prepopulateRecipes();
   }
   
   /**
@@ -506,26 +514,26 @@ class LocalRecipeProvider extends RecipeProvider {
    * @returns {Promise<Array>} - Array of recipes
    */
   async getRecipesForProduct(product) {
-    // Extract product terms to search for
-    const searchTerms = [
-      product.name.toLowerCase(),
-      ...product.ingredients.toLowerCase().split(/[,.\s]+/)
-    ].filter(term => term.length > 3);
+    // If no product or empty, return all recipes
+    if (!product || (!product.name && !product.ingredients)) {
+      return this.recipes.map(r => ({ ...r, provider: 'local' }));
+    }
     
-    // Find recipes that match product terms
+    const searchTerms = [
+      product.name?.toLowerCase() || '',
+      ...(product.ingredients || '').toLowerCase().split(/[,.\s]+/)
+    ].filter(term => term.length > 2);
+    
     return this.recipes.filter(recipe => {
-      // Check if any search term matches recipe title
-      const titleMatch = searchTerms.some(term => 
-        recipe.title.toLowerCase().includes(term)
+      const titleMatch = searchTerms.some(term => recipe.title.toLowerCase().includes(term));
+      const ingredientMatch = recipe.ingredients.some(ing =>
+        searchTerms.some(term => ing.toLowerCase().includes(term))
       );
-      
-      // Check if the product matches any of the recipe's matching products
-      const productMatch = recipe.matchingProducts && recipe.matchingProducts.some(matchProduct => 
-        searchTerms.some(term => term.includes(matchProduct) || matchProduct.includes(term))
+      const categoryMatch = recipe.category && searchTerms.some(term =>
+        recipe.category.toLowerCase().includes(term)
       );
-      
-      return titleMatch || productMatch;
-    });
+      return titleMatch || ingredientMatch || categoryMatch;
+    }).map(r => ({ ...r, provider: 'local' }));
   }
   
   /**

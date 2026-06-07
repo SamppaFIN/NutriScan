@@ -132,6 +132,68 @@ class LocalProductDatabase {
       lastUpdated: new Date().toISOString()
     };
   }
+
+  // ── Open Food Facts integration ────────────────────────────────
+
+  /**
+   * Fetch product from Open Food Facts API by barcode.
+   * Transforms the OFF response into the web app's product format.
+   *
+   * @param {string} barcode — EAN-8 or EAN-13 barcode
+   * @returns {Object|null} — Product object, or null if not found
+   */
+  async fetchFromOpenFoodFacts(barcode) {
+    try {
+      const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.warn(`OFF API HTTP ${response.status} for barcode ${barcode}`);
+        return null;
+      }
+
+      const json = await response.json();
+
+      // OFF returns status: 0 when product is not found
+      if (!json || json.status === 0 || !json.product) {
+        return null;
+      }
+
+      const off = json.product;
+
+      // Transform OFF data to web product format
+      const product = {
+        barcode,
+        name: off.product_name_fi || off.product_name_en || off.product_name || 'Unknown product',
+        brand: off.brands || 'Unknown',
+        origin: off.countries_tags?.[0]?.replace(/^en:/, '') || '',
+        ingredients: off.ingredients_text_fi || off.ingredients_text_en || off.ingredients_text || '',
+        allergens: (off.allergens_tags || [])
+          .map(tag => tag.replace(/^[a-z]{2}:/, ''))
+          .map(name => name.charAt(0).toUpperCase() + name.slice(1)),
+        eCodes: (off.additives_tags || []).map(tag => {
+          const code = tag.replace(/^[a-z]{2}:/, '').toUpperCase();
+          return { code, name: code };
+        }),
+        nutritionalValues: {
+          calories: `${off.nutriments?.['energy-kcal_100g'] ?? off.nutriments?.energy_kcal_100g ?? 0} kcal/100g`,
+          protein: `${off.nutriments?.proteins_100g ?? 0}g/100g`,
+          carbohydrates: `${off.nutriments?.carbohydrates_100g ?? 0}g/100g`,
+          fat: `${off.nutriments?.fat_100g ?? 0}g/100g`,
+        },
+        lastScanned: new Date().toISOString(),
+        source: 'openfoodfacts',
+      };
+
+      // Save to local DB for future offline use
+      this.addProduct(product);
+
+      return product;
+    } catch (error) {
+      console.error('Error fetching from Open Food Facts:', error);
+      return null;
+    }
+  }
   
   /**
    * Prepopulate with common Finnish products

@@ -1,180 +1,194 @@
 /**
- * Service for retrieving product information from Finnish grocery products
+ * Product service — fetches product data from Open Food Facts API
+ * with local cache fallback for offline use.
+ *
+ * Open Food Facts is a free, open-source food product database
+ * with over 4M products from 150 countries. No API key required.
+ *
+ * API docs: https://world.openfoodfacts.org/api
  */
-import { mockProductDatabase } from './mockData';
+import { getCachedProduct, cacheProduct } from '../utils/storageUtils';
 
-// Get product information based on barcode
+// ── API configuration ──────────────────────────────────────────
+const OFF_API_BASE = 'https://world.openfoodfacts.org/api/v2/product';
+
+// ── Public API ──────────────────────────────────────────────────
+
+/**
+ * Get product information for a barcode.
+ * Checks local cache first, then Open Food Facts API.
+ *
+ * @param {string} barcode — EAN-8 or EAN-13 barcode
+ * @returns {Object|null}  — Product object, or null if not found
+ */
 export const getProductInfo = async (barcode) => {
   try {
-    // In a real application, this would make an API call to a Finnish food database
-    // For demo purposes, we'll create a simulated delay and return data from our mock database
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Find product in mock database
-    const product = findProductByBarcode(barcode);
-    
-    if (!product) {
-      throw new Error('Product not found');
+    // 1. Try local cache
+    const cached = await getCachedProduct(barcode);
+    if (cached) {
+      return cached;
     }
-    
+
+    // 2. Fetch from Open Food Facts
+    const response = await fetch(`${OFF_API_BASE}/${barcode}.json`);
+    if (!response.ok) {
+      console.warn(`OFF API HTTP ${response.status} for barcode ${barcode}`);
+      return null;
+    }
+
+    const json = await response.json();
+
+    // OFF returns status: 0 when product is not found
+    if (!json || json.status === 0 || !json.product) {
+      return null;
+    }
+
+    // 3. Transform OFF data to our Product model
+    const product = transformOffProduct(barcode, json.product);
+
+    // 4. Cache for offline use
+    await cacheProduct(barcode, product);
+
     return product;
   } catch (error) {
     console.error('Error fetching product info:', error);
-    throw error;
+    return null;
   }
 };
 
-// Find product by barcode in mock database
-// In a real app, this would be an API call to a Finnish food database
-function findProductByBarcode(barcode) {
-  // Try to find the product in our mock database
-  const product = mockProductDatabase.find(p => p.barcode === barcode);
-  
-  // If product is not found, generate a random one (for demo purposes)
-  if (!product) {
-    return generateRandomProduct(barcode);
-  }
-  
-  return product;
-}
+// ── OFF → Product transformation ────────────────────────────────
 
-// Generate a random product for demonstration purposes
-// In a real app, this function would not exist
-function generateRandomProduct(barcode) {
-  // This is just for demonstration - in a real app you would 
-  // only return actual product data from your database
-  const products = [
-    {
-      name: "Ruisleipä",
-      manufacturer: "Vaasan",
-      ingredients: "Ruisjauho, vesi, vehnäjauho, suola, hiiva",
-      allergens: ["Ruis", "Vehnä"],
-      eCodes: [
-        { code: "E300", name: "Askorbiinihappo", warning: false },
-        { code: "E440", name: "Pektiini", warning: false }
-      ],
-      nutritionalInfo: {
-        calories: 215,
-        fat: 1.5,
-        saturatedFat: 0.2,
-        carbohydrates: 41,
-        sugars: 2,
-        fiber: 8.5,
-        protein: 6.5,
-        salt: 1.2
-      }
-    },
-    {
-      name: "Rasvaton maito",
-      manufacturer: "Valio",
-      ingredients: "Rasvaton maito, D-vitamiini",
-      allergens: ["Maito"],
-      eCodes: [],
-      nutritionalInfo: {
-        calories: 33,
-        fat: 0,
-        saturatedFat: 0,
-        carbohydrates: 4.8,
-        sugars: 4.8,
-        protein: 3.3,
-        salt: 0.1
-      }
-    },
-    {
-      name: "Kaurahiutaleet",
-      manufacturer: "Elovena",
-      ingredients: "Täysjyväkaura",
-      allergens: ["Kaura"],
-      eCodes: [],
-      nutritionalInfo: {
-        calories: 370,
-        fat: 7,
-        saturatedFat: 1.3,
-        carbohydrates: 58,
-        sugars: 1,
-        fiber: 10,
-        protein: 14,
-        salt: 0
-      }
-    }
-  ];
-  
-  const randomIndex = Math.floor(Math.random() * products.length);
-  const product = products[randomIndex];
-  
+/**
+ * Transform Open Food Facts API response into the app's Product model.
+ *
+ * OFF field              → Product field
+ * ─────────────────────────────────────────
+ * product_name_fi / en   → name
+ * brands                 → manufacturer
+ * ingredients_text_fi/en → ingredients
+ * allergens_tags         → allergens[]
+ * nutriments             → nutritionalInfo
+ * additives_tags         → eCodes[]
+ */
+function transformOffProduct(barcode, off) {
+  // ── Name ──────────────────────────────────────────────────
+  const name = off.product_name_fi
+    || off.product_name_en
+    || off.product_name
+    || 'Unknown product';
+
+  // ── Manufacturer ───────────────────────────────────────────
+  const manufacturer = off.brands
+    || off.brands_tags?.[0]?.replace(/^en:/, '')
+    || 'Unknown';
+
+  // ── Ingredients ────────────────────────────────────────────
+  const ingredients = off.ingredients_text_fi
+    || off.ingredients_text_en
+    || off.ingredients_text
+    || '';
+
+  // ── Allergens ──────────────────────────────────────────────
+  // OFF stores allergens as tags like "en:gluten" — clean them up
+  const allergens = (off.allergens_tags || [])
+    .map(tag => tag.replace(/^[a-z]{2}:/, ''))           // strip language prefix
+    .map(name => name.charAt(0).toUpperCase() + name.slice(1)) // capitalise
+    .filter(Boolean);
+
+  // Also try the plain allergens string as a fallback
+  if (allergens.length === 0 && off.allergens) {
+    const fromString = off.allergens
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    allergens.push(...fromString);
+  }
+
+  // ── E-codes (additives) ────────────────────────────────────
+  const eCodes = (off.additives_tags || []).map(tag => {
+    // OFF format: "en:e330" → code "E330"
+    const code = tag.replace(/^[a-z]{2}:/, '').toUpperCase();
+    return {
+      code,
+      name: additivename(code),
+      warning: isWarningAdditive(code),
+    };
+  });
+
+  // ── Nutritional info ───────────────────────────────────────
+  const n = off.nutriments || {};
+  const nutritionalInfo = {
+    calories:       round(n['energy-kcal_100g'] ?? n['energy-kcal'] ?? n.energy_kcal_100g),
+    fat:            round(n.fat_100g),
+    saturatedFat:   round(n['saturated-fat_100g']),
+    carbohydrates:  round(n.carbohydrates_100g),
+    sugars:         round(n.sugars_100g),
+    fiber:          round(n.fiber_100g),
+    protein:        round(n.proteins_100g),
+    salt:           round(n.salt_100g),
+  };
+
   return {
-    ...product,
-    barcode,
     id: `product-${barcode}`,
-    scannedTime: new Date().toISOString()
+    barcode,
+    name,
+    manufacturer,
+    ingredients,
+    allergens,
+    eCodes,
+    nutritionalInfo,
+    scannedTime: new Date().toISOString(),
   };
 }
 
-// This mock data function would not exist in a real app
-// It should fetch data from an actual Finnish food database API
-export const mockProductDatabase = [
-  {
-    id: "product-1",
-    barcode: "6410405102058",
-    name: "Ruisleipä",
-    manufacturer: "Vaasan",
-    ingredients: "Ruisjauho, vesi, vehnäjauho, suola, hiiva",
-    allergens: ["Ruis", "Vehnä"],
-    eCodes: [
-      { code: "E300", name: "Askorbiinihappo", warning: false },
-      { code: "E440", name: "Pektiini", warning: false }
-    ],
-    nutritionalInfo: {
-      calories: 215,
-      fat: 1.5,
-      saturatedFat: 0.2,
-      carbohydrates: 41,
-      sugars: 2,
-      fiber: 8.5,
-      protein: 6.5,
-      salt: 1.2
-    },
-    scannedTime: "2023-05-20T15:22:36.123Z"
-  },
-  {
-    id: "product-2",
-    barcode: "6413300000349",
-    name: "Rasvaton maito",
-    manufacturer: "Valio",
-    ingredients: "Rasvaton maito, D-vitamiini",
-    allergens: ["Maito"],
-    eCodes: [],
-    nutritionalInfo: {
-      calories: 33,
-      fat: 0,
-      saturatedFat: 0,
-      carbohydrates: 4.8,
-      sugars: 4.8,
-      protein: 3.3,
-      salt: 0.1
-    },
-    scannedTime: "2023-05-21T09:15:42.567Z"
-  },
-  {
-    id: "product-3",
-    barcode: "6410405073884",
-    name: "Kaurahiutaleet",
-    manufacturer: "Elovena",
-    ingredients: "Täysjyväkaura",
-    allergens: ["Kaura"],
-    eCodes: [],
-    nutritionalInfo: {
-      calories: 370,
-      fat: 7,
-      saturatedFat: 1.3,
-      carbohydrates: 58,
-      sugars: 1,
-      fiber: 10,
-      protein: 14,
-      salt: 0
-    },
-    scannedTime: "2023-05-19T17:30:22.890Z"
-  }
-];
+// ── Helpers ─────────────────────────────────────────────────────
+
+/** Round a number to 1 decimal place, or return 0 if NaN/undefined */
+function round(val) {
+  if (val === undefined || val === null) return 0;
+  const n = Number(val);
+  return Number.isNaN(n) ? 0 : Math.round(n * 10) / 10;
+}
+
+/** Known additive names (subset — extended as needed) */
+function additivename(code) {
+  const map = {
+    E100: 'Curcumin', E101: 'Riboflavin', E102: 'Tartrazine',
+    E110: 'Sunset Yellow', E120: 'Cochineal', E122: 'Azorubine',
+    E124: 'Ponceau 4R', E129: 'Allura Red', E133: 'Brilliant Blue',
+    E150a: 'Plain Caramel', E150c: 'Ammonia Caramel', E150d: 'Sulphite Ammonia Caramel',
+    E160a: 'Carotenes', E160c: 'Paprika Extract', E162: 'Beetroot Red',
+    E171: 'Titanium Dioxide', E200: 'Sorbic Acid', E202: 'Potassium Sorbate',
+    E210: 'Benzoic Acid', E211: 'Sodium Benzoate', E220: 'Sulphur Dioxide',
+    E250: 'Sodium Nitrite', E260: 'Acetic Acid', E270: 'Lactic Acid',
+    E290: 'Carbon Dioxide', E296: 'Malic Acid', E300: 'Ascorbic Acid',
+    E306: 'Tocopherols', E322: 'Lecithins', E325: 'Sodium Lactate',
+    E330: 'Citric Acid', E331: 'Sodium Citrates', E334: 'Tartaric Acid',
+    E339: 'Sodium Phosphates', E340: 'Potassium Phosphates',
+    E400: 'Alginic Acid', E401: 'Sodium Alginate', E406: 'Agar',
+    E407: 'Carrageenan', E410: 'Locust Bean Gum', E412: 'Guar Gum',
+    E414: 'Gum Arabic', E415: 'Xanthan Gum', E422: 'Glycerol',
+    E440: 'Pectins', E450: 'Diphosphates', E451: 'Triphosphates',
+    E452: 'Polyphosphates', E460: 'Cellulose', E466: 'CMC',
+    E471: 'Mono-/Diglycerides', E472e: 'DATEM', E476: 'Polyglycerol Polyricinoleate',
+    E500: 'Sodium Carbonates', E503: 'Ammonium Carbonates',
+    E509: 'Calcium Chloride', E551: 'Silicon Dioxide',
+    E621: 'MSG', E627: 'Disodium Guanylate', E631: 'Disodium Inosinate',
+    E901: 'Beeswax', E903: 'Carnauba Wax', E920: 'L-Cysteine',
+    E950: 'Acesulfame K', E951: 'Aspartame', E952: 'Cyclamates',
+    E953: 'Isomalt', E954: 'Saccharin', E955: 'Sucralose',
+    E965: 'Maltitol', E967: 'Xylitol', E968: 'Erythritol',
+  };
+  return map[code] || code;
+}
+
+/** Additives with known health concerns */
+function isWarningAdditive(code) {
+  const warnings = new Set([
+    'E102', 'E104', 'E110', 'E122', 'E124', 'E129', 'E131', 'E132',
+    'E133', 'E142', 'E151', 'E171', 'E210', 'E211', 'E212', 'E213',
+    'E220', 'E221', 'E222', 'E223', 'E224', 'E250', 'E251', 'E252',
+    'E951', 'E954',
+  ]);
+  return warnings.has(code);
+}

@@ -37,8 +37,35 @@ export default function ScanScreen({ navigation }) {
       // Process barcode data
       const barcodeData = await scanBarcode(data);
       
-      // Fetch product information
+      // Fetch product information from Open Food Facts (or cache)
       const productInfo = await getProductInfo(barcodeData.barcode);
+      
+      if (!productInfo) {
+        // Product not found in Open Food Facts
+        Alert.alert(
+          'Product not found',
+          `Barcode ${barcodeData.barcode} was not found in the database.\n\nYou can add it to Open Food Facts to help improve the database for everyone.`,
+          [
+            { text: 'Scan Again', onPress: () => setScanned(false) },
+            { 
+              text: 'Add to Open Food Facts',
+              onPress: () => {
+                // Open OFF in the browser so the user can add the product
+                const url = `https://world.openfoodfacts.org/cgi/product.pl?code=${barcodeData.barcode}`;
+                // Use Linking on native, or window.open on web
+                try {
+                  const { Linking } = require('react-native');
+                  Linking.openURL(url);
+                } catch (e) {
+                  // Fallback: nothing — the user can still scan again
+                }
+                setScanned(false);
+              },
+            },
+          ]
+        );
+        return;
+      }
       
       // Save to recently scanned
       await saveScannedProduct(productInfo);
@@ -48,8 +75,8 @@ export default function ScanScreen({ navigation }) {
     } catch (error) {
       console.error('Error processing barcode:', error);
       Alert.alert(
-        'Error',
-        'Could not find product information. Please try again or scan another product.',
+        'Scan Error',
+        'An error occurred while scanning. Please try again.',
         [{ text: 'OK', onPress: () => setScanned(false) }]
       );
     } finally {

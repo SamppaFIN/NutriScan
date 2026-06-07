@@ -291,6 +291,22 @@ const eCodeDatabase = {
     potentialIssues: ["May cause allergic reactions in some people", "Can cause digestive issues in large amounts"],
     commonIn: ["Soft drinks", "Candy", "Chewing gum", "Desserts"]
   },
+  "E401": {
+    name: "Sodium Alginate",
+    category: "Stabilizer",
+    origin: "Natural - derived from brown algae",
+    function: "Thickener, gelling agent, stabilizer",
+    potentialIssues: ["Generally recognized as safe", "May cause mild digestive issues in large amounts"],
+    commonIn: ["Ice cream", "Jams", "Jellies", "Desserts", "Sauces"]
+  },
+  "E500": {
+    name: "Sodium Carbonates",
+    category: "Acidity Regulator",
+    origin: "Natural mineral or synthetic",
+    function: "Raising agent, acidity regulator",
+    potentialIssues: ["Generally recognized as safe in small amounts", "May cause stomach irritation in large amounts"],
+    commonIn: ["Baked goods", "Baking powder", "Processed foods", "Cocoa products"]
+  },
   "E420": {
     name: "Sorbitol",
     category: "Sweetener/Stabilizer",
