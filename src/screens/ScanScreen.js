@@ -15,9 +15,9 @@ import { analyzeProductImage } from '../services/visionService';
 import { saveScannedProduct } from '../utils/storageUtils';
 import colors from '../constants/colors';
 
-export default function ScanScreen({ navigation }) {
+export default function ScanScreen({ navigation, route }) {
   const [hasPermission, setHasPermission] = useState(null);
-  const [mode, setMode] = useState('barcode'); // 'barcode' | 'photo'
+  const [mode, setMode] = useState(route?.params?.mode || 'barcode'); // 'barcode' | 'photo'
   const [scanning, setScanning] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [scanned, setScanned] = useState(false);

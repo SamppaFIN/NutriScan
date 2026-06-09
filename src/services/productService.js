@@ -12,6 +12,7 @@ import { extractAllergensFromText } from '../utils/allergenUtils';
 
 // ── API configuration ──────────────────────────────────────────
 const OFF_API_BASE = 'https://world.openfoodfacts.org/api/v2/product';
+const CACHE_VERSION = 2; // bump to invalidate stale caches from older transform logic
 
 // ── Public API ──────────────────────────────────────────────────
 
@@ -24,9 +25,9 @@ const OFF_API_BASE = 'https://world.openfoodfacts.org/api/v2/product';
  */
 export const getProductInfo = async (barcode) => {
   try {
-    // 1. Try local cache
+    // 1. Try local cache (skip if from older transform version)
     const cached = await getCachedProduct(barcode);
-    if (cached) {
+    if (cached && cached._cacheVersion === CACHE_VERSION) {
       return cached;
     }
 
@@ -210,6 +211,7 @@ function transformOffProduct(barcode, off) {
     eCodes,
     nutritionalInfo,
     scannedTime: new Date().toISOString(),
+    _cacheVersion: CACHE_VERSION,
   };
 }
 

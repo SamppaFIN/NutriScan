@@ -43,6 +43,10 @@ export default function HomeScreen({ navigation }) {
     navigation.navigate('Scan');
   };
 
+  const navigateToPhotoScan = () => {
+    navigation.navigate('Scan', { mode: 'photo' });
+  };
+
   const navigateToProductInfo = (product) => {
     navigation.navigate('ProductInfo', { product });
   };
@@ -59,19 +63,29 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.welcomeSection}>
         <Text style={styles.welcomeTitle}>
-          Welcome to Finnish Food Scanner
+          NutriScan
         </Text>
         <Text style={styles.welcomeSubtitle}>
-          Scan products to check ingredients and nutritional info
+          Skannaa tuotteita — viivakoodilla tai kuvasta
         </Text>
         
-        <TouchableOpacity 
-          style={styles.scanButton} 
-          onPress={navigateToScan}
-        >
-          <Feather name="camera" size={24} color="white" />
-          <Text style={styles.scanButtonText}>Scan a Product</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity 
+            style={[styles.scanButton, styles.barcodeButton]} 
+            onPress={navigateToScan}
+          >
+            <Feather name="maximize" size={22} color="white" />
+            <Text style={styles.scanButtonText}>Viivakoodi</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.scanButton, styles.photoButton]} 
+            onPress={navigateToPhotoScan}
+          >
+            <Feather name="camera" size={22} color="white" />
+            <Text style={styles.scanButtonText}>AI Tunnistus</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.recentSection}>
@@ -142,10 +156,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 3,
+    flex: 1,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  barcodeButton: {
+    backgroundColor: colors.primaryDark,
+  },
+  photoButton: {
+    backgroundColor: '#7C4DFF',
   },
   scanButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     marginLeft: 8,
   },
