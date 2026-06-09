@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   leftSection: {
     flex: 1,
-    paddingRight: a5,
+    paddingRight: 15,
   },
   rightSection: {
     flexDirection: 'row',

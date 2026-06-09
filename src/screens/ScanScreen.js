@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ActivityIndicator,
-  Alert 
+  Alert,
+  Linking 
 } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Feather } from '@expo/vector-icons';
@@ -52,10 +53,7 @@ export default function ScanScreen({ navigation, route }) {
               text: 'Add to Open Food Facts',
               onPress: () => {
                 const url = `https://world.openfoodfacts.org/cgi/product.pl?code=${barcodeData.barcode}`;
-                try {
-                  const { Linking } = require('react-native');
-                  Linking.openURL(url);
-                } catch (e) { /* fallback */ }
+                Linking.openURL(url).catch(() => {});
                 setScanned(false);
               },
             },
