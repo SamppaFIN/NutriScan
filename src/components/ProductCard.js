@@ -18,19 +18,19 @@ export default function ProductCard({ product, onPress, preferences }) {
           <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
           <Text style={styles.manufacturer} numberOfLines={1}>{product.manufacturer}</Text>
           
-          {/* Basic nutritional info preview */}
-          <View style={styles.nutritionPreview}>
-            {product.nutritionalInfo?.calories && (
+          {/* Basic nutritional info preview — only show when data exists */}
+          {product.nutritionalInfo?.calories > 0 && (
+            <View style={styles.nutritionPreview}>
               <Text style={styles.nutritionItem}>
                 {product.nutritionalInfo.calories} kcal
               </Text>
-            )}
-            {product.nutritionalInfo?.protein && (
-              <Text style={styles.nutritionItem}>
-                Protein: {product.nutritionalInfo.protein}g
-              </Text>
-            )}
-          </View>
+              {product.nutritionalInfo?.protein > 0 && (
+                <Text style={styles.nutritionItem}>
+                  Protein: {product.nutritionalInfo.protein}g
+                </Text>
+              )}
+            </View>
+          )}
         </View>
         
         <View style={styles.rightSection}>

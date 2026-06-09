@@ -3,10 +3,17 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import colors from '../constants/colors';
 
 export default function NutritionTable({ nutritionData }) {
-  if (!nutritionData) {
+  // Check if ALL numeric values are 0 or missing
+  const numericKeys = ['calories', 'fat', 'saturatedFat', 'carbohydrates', 'sugars', 'fiber', 'protein', 'salt'];
+  const allZero = numericKeys.every(k => !nutritionData || !nutritionData[k]);
+
+  if (!nutritionData || allZero) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Nutritional information not available</Text>
+        <Text style={styles.emptyText}>Ravintotietoja ei ole saatavilla Open Food Factsissa</Text>
+        <Text style={styles.emptyHint}>
+          Voit auttaa lisäämällä tuotteen tiedot osoitteessa world.openfoodfacts.org
+        </Text>
       </View>
     );
   }
@@ -160,5 +167,12 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#888',
     fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  emptyHint: {
+    color: '#aaa',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
   },
 });

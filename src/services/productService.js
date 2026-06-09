@@ -8,6 +8,7 @@
  * API docs: https://world.openfoodfacts.org/api
  */
 import { getCachedProduct, cacheProduct } from '../utils/storageUtils';
+import { extractAllergensFromText } from '../utils/allergenUtils';
 
 // ── API configuration ──────────────────────────────────────────
 const OFF_API_BASE = 'https://world.openfoodfacts.org/api/v2/product';
@@ -45,6 +46,22 @@ export const getProductInfo = async (barcode) => {
 
     // 3. Transform OFF data to our Product model
     const product = transformOffProduct(barcode, json.product);
+
+    // Debug: log what OFF returned vs what we extracted
+    if (__DEV__) {
+      const off = json.product;
+      console.log('[OFF debug]', {
+        barcode,
+        hasAllergensTags: (off.allergens_tags || []).length,
+        hasAllergensHierarchy: (off.allergens_hierarchy || []).length,
+        hasAllergensFromIngredients: !!off.allergens_from_ingredients,
+        hasAllergensString: !!off.allergens,
+        hasIngredientsText: !!(off.ingredients_text_fi || off.ingredients_text_en || off.ingredients_text),
+        extractedAllergens: product.allergens.length,
+        nutrimentsKeyCount: Object.keys(off.nutriments || {}).length,
+        nutritionZero: Object.values(product.nutritionalInfo).filter(v => typeof v === 'number' && v === 0).length,
+      });
+    }
 
     // 4. Cache for offline use
     await cacheProduct(barcode, product);
@@ -89,19 +106,71 @@ function transformOffProduct(barcode, off) {
     || '';
 
   // ── Allergens ──────────────────────────────────────────────
-  // OFF stores allergens as tags like "en:gluten" — clean them up
-  const allergens = (off.allergens_tags || [])
-    .map(tag => tag.replace(/^[a-z]{2}:/, ''))           // strip language prefix
-    .map(name => name.charAt(0).toUpperCase() + name.slice(1)) // capitalise
-    .filter(Boolean);
+  // Collect from multiple OFF sources, best first, fallbacks after.
+  const allergenSources = [];
 
-  // Also try the plain allergens string as a fallback
-  if (allergens.length === 0 && off.allergens) {
+  // 1. allergens_tags (primary OFF field, e.g. "en:gluten")
+  if (off.allergens_tags?.length) {
+    const fromTags = off.allergens_tags
+      .map(tag => tag.replace(/^[a-z]{2}:/, ''))
+      .map(name => name.charAt(0).toUpperCase() + name.slice(1))
+      .filter(Boolean);
+    allergenSources.push(fromTags);
+  }
+
+  // 2. allergens_hierarchy (alternative OFF field)
+  if (off.allergens_hierarchy?.length) {
+    const fromHierarchy = off.allergens_hierarchy
+      .map(tag => {
+        // format: "en:gluten" or just "gluten"
+        const cleaned = tag.replace(/^[a-z]{2}:/, '');
+        return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+      })
+      .filter(Boolean);
+    allergenSources.push(fromHierarchy);
+  }
+
+  // 3. allergens_from_ingredients (OFF auto-detected)
+  if (off.allergens_from_ingredients?.length) {
+    const fromIngredients = off.allergens_from_ingredients
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+    allergenSources.push(fromIngredients);
+  }
+
+  // 4. allergens plain string
+  if (off.allergens) {
     const fromString = off.allergens
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
-    allergens.push(...fromString);
+    allergenSources.push(fromString);
+  }
+
+  // 5. Extract from ingredients text (Finnish + English)
+  const ingredientsForAllergens = off.ingredients_text_fi
+    || off.ingredients_text_en
+    || off.ingredients_text
+    || '';
+  if (ingredientsForAllergens) {
+    const fromText = extractAllergensFromText(ingredientsForAllergens);
+    if (fromText.length) {
+      allergenSources.push(fromText);
+    }
+  }
+
+  // Merge all sources, deduplicate (case-insensitive)
+  const seen = new Set();
+  const allergens = [];
+  for (const source of allergenSources) {
+    for (const item of source) {
+      const key = item.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        allergens.push(item.charAt(0).toUpperCase() + item.slice(1));
+      }
+    }
   }
 
   // ── E-codes (additives) ────────────────────────────────────
@@ -118,14 +187,17 @@ function transformOffProduct(barcode, off) {
   // ── Nutritional info ───────────────────────────────────────
   const n = off.nutriments || {};
   const nutritionalInfo = {
-    calories:       round(n['energy-kcal_100g'] ?? n['energy-kcal'] ?? n.energy_kcal_100g),
-    fat:            round(n.fat_100g),
-    saturatedFat:   round(n['saturated-fat_100g']),
-    carbohydrates:  round(n.carbohydrates_100g),
-    sugars:         round(n.sugars_100g),
-    fiber:          round(n.fiber_100g),
-    protein:        round(n.proteins_100g),
-    salt:           round(n.salt_100g),
+    calories:       round(n['energy-kcal_100g'] ?? n['energy-kcal'] ?? n.energy_kcal_100g ?? n['energy-kcal_value'] ?? n.energy_100g),
+    fat:            round(n.fat_100g ?? n.fat_value ?? n.fat),
+    saturatedFat:   round(n['saturated-fat_100g'] ?? n['saturated-fat_value'] ?? n.saturated_fat_100g ?? n.saturated_fat),
+    carbohydrates:  round(n.carbohydrates_100g ?? n['carbohydrates_value'] ?? n.carbohydrates),
+    sugars:         round(n.sugars_100g ?? n['sugars_value'] ?? n.sugars),
+    fiber:          round(n.fiber_100g ?? n['fiber_value'] ?? n.fiber),
+    protein:        round(n.proteins_100g ?? n['proteins_value'] ?? n.proteins),
+    salt:           round(n.salt_100g ?? n['salt_value'] ?? n.salt),
+    // Extra fields for richer display
+    novaGroup:      off.nova_group ?? null,
+    nutriscoreGrade: off.nutriscore_grade ?? null,
   };
 
   return {

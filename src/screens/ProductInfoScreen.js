@@ -123,7 +123,7 @@ export default function ProductInfoScreen({ route, navigation }) {
       )}
 
       {/* Allergens */}
-      {product.allergens && product.allergens.length > 0 && (
+      {product.allergens && product.allergens.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Allergens</Text>
           <View style={styles.tagsContainer}>
@@ -136,6 +136,15 @@ export default function ProductInfoScreen({ route, navigation }) {
             ))}
           </View>
         </View>
+      ) : (
+        product.ingredients ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Allergens</Text>
+            <Text style={styles.noAllergenNotice}>
+              Allergeenitietoja ei ole merkitty tuotetietoihin. Tarkista allergeenit ainesosaluettelosta.
+            </Text>
+          </View>
+        ) : null
       )}
 
       {/* Recipe Suggestions */}
@@ -284,6 +293,12 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     marginVertical: 10,
+  },
+  noAllergenNotice: {
+    fontSize: 14,
+    color: '#888',
+    fontStyle: 'italic',
+    lineHeight: 20,
   },
   inventorySection: {
     marginBottom: 15,
